@@ -1404,7 +1404,7 @@
 
     $('btnLogin').addEventListener('click', function () {
       var email = el.authEmail.value.trim();
-      var pwd = el.authPwd.value;
+      var pwd = el.authPwd.value.trim();
       if (!email || !pwd) { toast('请填写登录邮箱和密码', { type: 'err' }); return; }
       var btn = $('btnLogin');
       btn.disabled = true;
@@ -1419,7 +1419,13 @@
         toast('登录成功，开始同步…');
         return doSync(false);
       }).catch(function (e) {
-        toast(e.message || '登录失败', { type: 'err' });
+        var msg = e.message || '登录失败';
+        toast(msg, { type: 'err', duration: 9000 });
+        if (el.cloudStatus) {
+          el.cloudStatus.innerHTML = '<b style="color:var(--danger)">登录失败：</b>' + esc(msg) +
+            '<br><span style="font-size:11.5px;color:var(--muted)">地址：' + esc(el.cloudUrl.value.trim() || '空') +
+            ' · 邮箱：' + esc(email) + '</span>';
+        }
       }).then(function () {
         btn.disabled = false;
         btn.textContent = '登录并同步';
