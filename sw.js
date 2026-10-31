@@ -2,17 +2,17 @@
  * 仓储图书库存 · Service Worker
  * 策略：同源资源 stale-while-revalidate，保证弱网/断网也能打开；跨域请求（云端同步）直接放行不缓存。
  */
-var CACHE = 'bookstock-v5';
+var CACHE = 'bookstock-v6';
 var ASSETS = [
   './index.html',
   './shop.html',
   './manifest.webmanifest',
-  './assets/app.css?v=20261101c',
-  './assets/shop.css?v=20261101c',
-  './assets/store.js?v=20261101c',
-  './assets/cloud.js?v=20261101c',
-  './assets/app.js?v=20261101c',
-  './assets/shop.js?v=20261101c',
+  './assets/app.css?v=20261101d',
+  './assets/shop.css?v=20261101d',
+  './assets/store.js?v=20261101d',
+  './assets/cloud.js?v=20261101d',
+  './assets/app.js?v=20261101d',
+  './assets/shop.js?v=20261101d',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png'
@@ -47,6 +47,22 @@ self.addEventListener('fetch', function (e) {
   // 配置和上架快照必须拿最新的，不能走缓存
   if (/\/config\.json$|\/catalog\.json$/.test(url.pathname)) {
     e.respondWith(fetch(req).catch(function () { return caches.match(req); }));
+    return;
+  }
+
+  // 页面本身走「网络优先」：改了代码，刷新就能拿到新版；断网时退回缓存
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (cache) { cache.put(req, copy); });
+        return res;
+      }).catch(function () {
+        return caches.match(req, { ignoreSearch: true }).then(function (hit) {
+          return hit || caches.match('./index.html');
+        });
+      })
+    );
     return;
   }
 
