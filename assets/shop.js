@@ -75,7 +75,7 @@
   /* ---------------- 数据 ---------------- */
 
   function readConfig() {
-    return fetch('config.json', { cache: 'no-store' })
+    return fetch('config.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : {}; })
       .then(function (c) {
         var url = normalizeUrl(c.supabaseUrl);
@@ -111,7 +111,7 @@
   }
 
   function fetchStatic() {
-    return fetch('catalog.json', { cache: 'no-store' }).then(function (res) {
+    return fetch('catalog.json?t=' + Date.now(), { cache: 'no-store' }).then(function (res) {
       if (!res.ok) { throw new Error('没有 catalog.json'); }
       return res.json();
     }).then(function (data) {
