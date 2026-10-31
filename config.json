@@ -1,0 +1,5 @@
+{
+  "_说明": "把下面两个值填成你自己 Supabase 项目的 Project URL 和 anon public key，然后保存。顾客页 shop.html 用它们读取库存（只读，不会暴露任何写入权限）。这两个值本来就会出现在网页里，可以公开。",
+  "supabaseUrl": "",
+  "supabaseKey": ""
+}
