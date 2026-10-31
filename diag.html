@@ -1,0 +1,17 @@
+<!doctype html><meta charset=utf-8><body><pre id=o>running</pre>
+<script>
+const U='https://llzbyzuoklyoxaaxxbmq.supabase.co/rest/v1/catalog?select=id&limit=1';
+const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsemJ5enVva2x5b3hhYXh4Ym1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NjE1OTAsImV4cCI6MjEwOTAzNzU5MH0.DSWlrQG7wiDgyd6QBA3woV4S0I_ogaxKytIZCT_5Rq8';
+(async()=>{
+ const out=[];
+ let t0=Date.now();
+ try { const r=await fetch(U,{headers:{apikey:K}}); const t=await r.text(); out.push('apikey=OK '+r.status+' '+(Date.now()-t0)+'ms '+t.slice(0,40)); }
+ catch(e){ out.push('apikey=FAIL '+e.name+' "'+e.message+'" '+(Date.now()-t0)+'ms'); }
+ t0=Date.now();
+ try { const r=await fetch(U); out.push('plain=OK '+r.status+' '+(Date.now()-t0)+'ms'); }
+ catch(e){ out.push('plain=FAIL '+e.name+' "'+e.message+'"'); }
+ try { const r=await fetch(U,{mode:'no-cors'}); out.push('nocors=type:'+r.type); }
+ catch(e){ out.push('nocors=FAIL '+e.name); }
+ document.getElementById('o').textContent=out.join(' || ');
+})();
+</script>
