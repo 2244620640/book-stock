@@ -1,5 +1,5 @@
 {
-  "_说明": "把下面两个值填成你自己 Supabase 项目的 Project URL 和 anon public key，然后保存。顾客页 shop.html 用它们读取库存（只读，不会暴露任何写入权限）。这两个值本来就会出现在网页里，可以公开。",
-  "supabaseUrl": "",
-  "supabaseKey": ""
+  "_说明": "Supabase 项目地址与 anon public key。这两个值本来就会出现在网页里，可以公开；它只能读 catalog 视图（顾客页用），不能写数据。",
+  "supabaseUrl": "https://llzbyzuoklyoxaaxxbmq.supabase.co",
+  "supabaseKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsemJ5enVva2x5b3hhYXh4Ym1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NjE1OTAsImV4cCI6MjEwOTAzNzU5MH0.DSWlrQG7wiDgyd6QBA3woV4S0I_ogaxKytIZCT_5Rq8"
 }
