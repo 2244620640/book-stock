@@ -1409,6 +1409,9 @@
       var btn = $('btnLogin');
       btn.disabled = true;
       btn.textContent = '登录中…';
+      if (el.cloudStatus) {
+        el.cloudStatus.innerHTML = '正在连接 <b>' + esc(S.cloudConfig().url || '云端') + '</b> …（最多等 10 秒）';
+      }
       ensureCloudForm().then(function (ok) {
         if (!ok) { throw new Error('请先填写项目地址和 anon key'); }
         return C.signIn(email, pwd);
