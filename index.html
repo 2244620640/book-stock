@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14171a" media="(prefers-color-scheme: dark)">
+<meta name="description" content="仓储图书库存管理：多设备实时共享的图书入库、出库、盘点与预警。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="图书库存">
+<title>仓储图书库存</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">书</div>
+      <div style="min-width:0">
+        <h1>仓储图书库存</h1>
+        <div class="sub"><span class="dot" id="syncDot"></span><span id="syncText">本机模式</span></div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btnSync" title="立即同步" aria-label="立即同步">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="tabbar" id="tabbar">
+    <button class="tab active" data-view="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
+      <span>概览</span>
+    </button>
+    <button class="tab" data-view="books">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h12a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M8 8h7"/><path d="M8 12h5"/></svg>
+      <span>图书</span>
+    </button>
+    <button class="tab" data-view="logs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 9 8 9"/><polyline points="12 8 12 12 15 14"/></svg>
+      <span>流水</span>
+    </button>
+    <button class="tab" data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.4"/><circle cx="15" cy="17" r="2.4"/></svg>
+      <span>设置</span>
+    </button>
+  </nav>
+
+  <main>
+
+    <!-- ============ 概览 ============ -->
+    <section class="view active" id="view-overview">
+      <div class="overview-top">
+      <div class="hero">
+        <div class="eyebrow">INVENTORY</div>
+        <div class="big"><b id="heroQty">0</b><span>册在库</span></div>
+        <div class="row">
+          <div>库存码洋<b id="heroValue">¥0</b></div>
+          <div>图书品种<b id="heroTitles">0</b></div>
+          <div>库存预警<b id="heroWarn">0</b></div>
+        </div>
+      </div>
+
+      <div class="kpis" id="kpiRow"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <h2>分类库存</h2>
+          <button class="more" data-go="books">全部图书 →</button>
+        </div>
+        <div class="panel" style="padding:15px">
+          <div class="bars" id="catBars"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <h2>库存预警</h2>
+          <button class="more" data-stock="warn">查看全部 →</button>
+        </div>
+        <div class="panel" id="warnList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <h2>最近动态</h2>
+          <button class="more" data-go="logs">全部流水 →</button>
+        </div>
+        <div class="panel" id="recentLogs"></div>
+      </div>
+    </section>
+
+    <!-- ============ 图书 ============ -->
+    <section class="view" id="view-books">
+      <div class="toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          <input id="searchInput" type="search" placeholder="搜索书名 / 作者 / ISBN / 货位" autocomplete="off" enterkeyhint="search" aria-label="搜索图书">
+          <button class="clear" id="searchClear" hidden aria-label="清空搜索">×</button>
+        </div>
+        <select class="select" id="sortSelect" aria-label="排序">
+          <option value="updated">最近更新</option>
+          <option value="title">书名</option>
+          <option value="qtyAsc">库存少→多</option>
+          <option value="qtyDesc">库存多→少</option>
+          <option value="valueDesc">码洋高→低</option>
+          <option value="category">按分类</option>
+        </select>
+      </div>
+
+      <div class="chips" id="stockChips"></div>
+      <div class="chips" id="catChips"></div>
+      <div class="grid" id="bookList"></div>
+      <div id="bookEmpty"></div>
+      <div id="bookCount" class="muted" style="font-size:12px;text-align:center;padding:14px 0 4px"></div>
+    </section>
+
+    <!-- ============ 流水 ============ -->
+    <section class="view" id="view-logs">
+      <div class="toolbar">
+        <div class="chips" id="logChips" style="padding-bottom:0;flex:1"></div>
+        <button class="btn sm" id="btnExportLogs">导出</button>
+      </div>
+      <div class="panel" id="logList"></div>
+      <div id="logEmpty"></div>
+    </section>
+
+    <!-- ============ 设置 ============ -->
+    <section class="view" id="view-settings">
+
+      <div class="settings-card">
+        <h3>操作员</h3>
+        <p class="desc">出入库记录会带上操作员名字，多人共用时方便追溯。</p>
+        <div class="field" style="margin-bottom:10px">
+          <input class="input" id="operatorInput" placeholder="你的名字，例如：张三" maxlength="20">
+        </div>
+        <button class="btn sm" id="saveOperator">保存</button>
+      </div>
+
+      <div class="settings-card">
+        <h3>云同步 <span class="badge off" id="cloudBadge">未启用</span></h3>
+        <p class="desc">开启后，手机、电脑、平板上的库存是同一份数据。数据存放在你自己的 Supabase 免费账号里。</p>
+        <div class="status-line" id="cloudStatus">本机模式：数据只保存在当前浏览器</div>
+
+        <div class="field">
+          <label>Supabase 项目地址</label>
+          <input class="input mono" id="cloudUrl" placeholder="https://xxxxxxxx.supabase.co" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label>anon public key（可公开，勿填 service_role）</label>
+          <textarea class="input mono" id="cloudKey" rows="2" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." spellcheck="false" style="font-size:12px"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>登录邮箱</label>
+            <input class="input" id="authEmail" type="email" placeholder="you@example.com" autocomplete="username">
+          </div>
+          <div class="field">
+            <label>密码</label>
+            <input class="input" id="authPwd" type="password" placeholder="至少 6 位" autocomplete="current-password">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" id="btnLogin">登录并同步</button>
+          <button class="btn" id="btnTest">测试连接</button>
+        </div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn ghost sm" id="btnSignup">注册新账号</button>
+          <button class="btn ghost sm" id="btnLogout" style="color:var(--danger)">退出登录</button>
+        </div>
+
+        <details class="help">
+          <summary>怎么免费开通云同步（3 分钟）</summary>
+          <ol>
+            <li>打开 <b>supabase.com</b> 注册（GitHub 或邮箱），新建一个免费项目，区域选 <b>Singapore</b> 或 <b>Tokyo</b>，国内访问更快。</li>
+            <li>进入项目 → 左侧 <b>SQL Editor</b> → 新建查询，把 <code>supabase-schema.sql</code> 的全部内容粘进去并运行。</li>
+            <li>左侧 <b>Project Settings → API</b>，复制 <b>Project URL</b> 和 <b>anon public</b> 两个值，填到上面两栏。</li>
+            <li>左侧 <b>Authentication → Users → Add user</b>，填邮箱和密码创建账号（可关闭 Public signup 防止陌生人注册）。</li>
+            <li>回到这里点「登录并同步」。第二台设备填同样的地址、密钥和账号即可。</li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="settings-card">
+        <h3>顾客页 <span class="badge" id="shopBadge">只读</span></h3>
+        <p class="desc">把下面这个网址发给客户：他们只能看到还有哪些库存、可以把书加进选购清单，<b>不能入库出库、也看不到备注和流水</b>。</p>
+        <div class="field" style="margin-bottom:10px">
+          <input class="input mono" id="shopLink" readonly style="font-size:12px" placeholder="部署后自动显示">
+        </div>
+        <div class="btn-row">
+          <button class="btn sm primary" id="btnCopyShop">复制链接</button>
+          <button class="btn sm" id="btnOpenShop">打开顾客页</button>
+          <button class="btn sm ghost" id="btnExportCatalog">导出上架清单</button>
+        </div>
+        <details class="help">
+          <summary>顾客页怎么才能看到实时库存</summary>
+          <ol>
+            <li>顾客页读的是 Supabase 里的 <code>catalog</code> 视图（只读，匿名可访问，不含内部备注）。</li>
+            <li>执行 `supabase-schema.sql` 时会自动建好这个视图和读取权限。</li>
+            <li>打开站点根目录的 <code>config.json</code>，把 Project URL 和 anon public key 填进去，保存并重新上传。</li>
+            <li>没有配置 Supabase 时，顾客页会读取 <code>catalog.json</code>（用下面的「导出上架清单」生成后上传），数据是导出那一刻的快照。</li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="settings-card">
+        <h3>数据备份</h3>
+        <p class="desc">导出的 CSV 可以直接用 Excel / WPS 打开；JSON 备份用于换设备时完整恢复（含流水）。</p>
+        <div class="btn-row">
+          <button class="btn" data-act="exportCsv">导出 CSV</button>
+          <button class="btn" data-act="exportJson">导出备份</button>
+          <button class="btn" data-act="importCsv">导入 CSV</button>
+          <button class="btn" data-act="importJson">恢复备份</button>
+        </div>
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn ghost sm" data-act="seed">载入示例数据</button>
+          <button class="btn ghost sm" data-act="wipe" style="color:var(--danger)">清空本机数据</button>
+        </div>
+        <input type="file" id="fileCsv" accept=".csv,.txt,text/csv" hidden>
+        <input type="file" id="fileJson" accept=".json,application/json" hidden>
+      </div>
+
+      <div class="settings-card">
+        <h3>安装到手机桌面</h3>
+        <p class="desc">
+          用手机浏览器打开本页 → iPhone 点 Safari 的「分享」→「添加到主屏幕」；Android 点 Chrome 右上角「⋮」→「安装应用 / 添加到主屏幕」。之后可像 App 一样全屏使用，断网也能打开查看。
+        </p>
+      </div>
+
+      <div class="footer-note">
+        仓储图书库存 · 静态页面 + 免费云端数据库<br>
+        <span id="buildNote"></span>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<button class="fab" id="btnAdd" aria-label="新增图书">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<div class="modal" id="modal" hidden></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<noscript>
+  <div style="padding:40px 20px;text-align:center">本项目需要浏览器开启 JavaScript 才能使用。</div>
+</noscript>
+
+<script src="assets/store.js"></script>
+<script src="assets/cloud.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
