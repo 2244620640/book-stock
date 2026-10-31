@@ -427,6 +427,11 @@
       if (!cfg) { return fetchStatic(); }
       // 优先实时数据；连不上就退回站点里的静态快照（换网络/被墙时也能看到东西）
       return fetchCatalog(cfg).catch(function (e) {
+        // 记下真实原因，方便排查（页面上不显示技术细节）
+        try {
+          document.documentElement.setAttribute('data-cloud-error',
+            (e && e.name ? e.name : '?') + ' | ' + (e && e.message ? e.message : '') + ' | ' + cfg.url);
+        } catch (err) { /* ignore */ }
         return fetchStatic().then(function (res) {
           res.mode = 'static';
           res.degraded = '云端连不上（' + (e && e.message ? e.message : '网络错误') + '），显示的是静态快照';
