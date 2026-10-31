@@ -108,6 +108,7 @@
     return rawRequest('/auth/v1/token?grant_type=password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      timeout: 10000,
       body: JSON.stringify({ email: email, password: password })
     }).then(function (data) {
       saveAuth(data, email);
