@@ -1143,11 +1143,30 @@
       });
     }
 
-    $('btnTest').addEventListener('click', function () {
+    // 地址/密钥没填时，现场去读一次 config.json（应对页面被缓存、没自动填上的情况）
+    function ensureCloudForm() {
       readCloudForm();
-      if (!C.isConfigured()) { toast('请先填写项目地址和 anon key', { type: 'err' }); return; }
+      if (C.isConfigured()) { return Promise.resolve(true); }
+      return fetch('config.json?t=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .then(function (c) {
+          if (c && c.supabaseUrl && c.supabaseKey) {
+            el.cloudUrl.value = c.supabaseUrl;
+            el.cloudKey.value = c.supabaseKey;
+            readCloudForm();
+            updateCloudStatus();
+          }
+          return C.isConfigured();
+        })
+        .catch(function () { return C.isConfigured(); });
+    }
+
+    $('btnTest').addEventListener('click', function () {
       toast('正在测试连接…');
-      C.testConnection().then(function (r) {
+      ensureCloudForm().then(function (ok) {
+        if (!ok) { throw new Error('请先填写项目地址和 anon key'); }
+        return C.testConnection();
+      }).then(function (r) {
         toast(r.message);
         updateCloudStatus();
       }).catch(function (e) {
@@ -1156,15 +1175,16 @@
     });
 
     $('btnLogin').addEventListener('click', function () {
-      readCloudForm();
       var email = el.authEmail.value.trim();
       var pwd = el.authPwd.value;
-      if (!C.isConfigured()) { toast('请先填写项目地址和 anon key', { type: 'err' }); return; }
       if (!email || !pwd) { toast('请填写登录邮箱和密码', { type: 'err' }); return; }
       var btn = $('btnLogin');
       btn.disabled = true;
       btn.textContent = '登录中…';
-      C.signIn(email, pwd).then(function () {
+      ensureCloudForm().then(function (ok) {
+        if (!ok) { throw new Error('请先填写项目地址和 anon key'); }
+        return C.signIn(email, pwd);
+      }).then(function () {
         el.authPwd.value = '';
         S.saveCloudConfig({ email: email });
         updateCloudStatus();
@@ -1293,8 +1313,10 @@
         .then(function (r) { return r.ok ? r.json() : {}; })
         .then(function (c) {
           if (c && c.supabaseUrl && c.supabaseKey && !S.cloudConfig().url) {
+            S.saveCloudConfig({ url: c.supabaseUrl, key: c.supabaseKey });
             el.cloudUrl.value = c.supabaseUrl;
             el.cloudKey.value = c.supabaseKey;
+            updateCloudStatus();
           }
         })
         .catch(function () { /* file:// 或未配置时忽略 */ });
