@@ -1287,6 +1287,19 @@
     render();
     fillSettings();
 
+    // 本机还没填过云端配置时，自动读取部署在站点里的 config.json（省得手打地址和密钥）
+    if (!S.cloudConfig().url) {
+      fetch('config.json', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .then(function (c) {
+          if (c && c.supabaseUrl && c.supabaseKey && !S.cloudConfig().url) {
+            el.cloudUrl.value = c.supabaseUrl;
+            el.cloudKey.value = c.supabaseKey;
+          }
+        })
+        .catch(function () { /* file:// 或未配置时忽略 */ });
+    }
+
     var note = $('buildNote');
     if (note) { note.textContent = '版本 1.0 · ' + (navigator.onLine ? '在线' : '离线'); }
 
