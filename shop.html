@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14171a" media="(prefers-color-scheme: dark)">
+<meta name="description" content="在售图书一览：看看有哪些书还有库存。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="图书选购">
+<title>在售图书</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/shop.css">
+</head>
+<body class="shop-body">
+
+<header class="shop-header">
+  <div class="brand">
+    <div class="logo">书</div>
+    <div style="min-width:0">
+      <h1>在售图书</h1>
+      <div class="sub"><span class="dot" id="shopDot"></span><span id="shopStatus">正在加载…</span></div>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="icon-btn" id="btnRefresh" title="刷新库存" aria-label="刷新库存">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+    </button>
+    <button class="icon-btn cart-btn" id="btnCart" title="我的选购" aria-label="我的选购">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg>
+      <span class="cart-badge" id="cartBadge" hidden>0</span>
+    </button>
+  </div>
+</header>
+
+<div class="shop-toolbar">
+  <div class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+    <input id="shopSearch" type="search" placeholder="搜索书名 / ISBN / 分类" autocomplete="off" aria-label="搜索图书">
+    <button class="clear" id="shopClear" hidden aria-label="清空">×</button>
+  </div>
+</div>
+
+<div class="chips" id="shopCats"></div>
+
+<main class="shop-grid" id="shopGrid"></main>
+<div id="shopEmpty"></div>
+<div class="shop-count" id="shopCount"></div>
+
+<button class="cart-fab" id="cartFab" hidden>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg>
+  <span id="cartFabText">我的选购</span>
+</button>
+
+<div class="drawer" id="cartDrawer" hidden>
+  <div class="drawer-card">
+    <div class="modal-head">
+      <div>
+        <h3>我的选购</h3>
+        <p id="cartSummary">还没选择图书</p>
+      </div>
+      <button class="modal-close" id="cartClose" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="cart-list" id="cartList"></div>
+    <div class="cart-foot">
+      <div class="cart-total">
+        <span>合计</span>
+        <b id="cartTotal">¥0.00</b>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="btnCopy" type="button">复制清单</button>
+        <button class="btn ghost" id="btnClearCart" type="button" style="color:var(--danger)">清空</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="assets/shop.js"></script>
+</body>
+</html>
