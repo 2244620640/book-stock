@@ -709,6 +709,147 @@
     );
   }
 
+  function fileToJpegBlob(file, maxSide, quality) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function () {
+        try {
+          var w = img.width, h = img.height;
+          var scale = Math.min(1, maxSide / Math.max(w, h));
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(w * scale));
+          canvas.height = Math.max(1, Math.round(h * scale));
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(function (blob) {
+            if (blob) { resolve(blob); } else { reject(new Error('图片压缩失败')); }
+          }, 'image/jpeg', quality);
+        } catch (e) {
+          URL.revokeObjectURL(url);
+          reject(new Error('图片处理失败'));
+        }
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error('不是可识别的图片：' + file.name));
+      };
+      img.src = url;
+    });
+  }
+
+  function uploadPhoto(blob, path) {
+    var cfg = C.config();
+    var s = S.session();
+    if (!s || !s.access_token) { return Promise.reject(new Error('请先登录云同步')); }
+    return fetch(cfg.url + '/storage/v1/object/' + path, {
+      method: 'POST',
+      headers: {
+        apikey: cfg.key,
+        Authorization: 'Bearer ' + s.access_token,
+        'Content-Type': 'image/jpeg',
+        'x-upsert': 'true'
+      },
+      body: blob
+    }).then(function (r) {
+      if (r.ok) { return cfg.url + '/storage/v1/object/public/' + path; }
+      return r.text().then(function (t) {
+        throw new Error('上传失败（HTTP ' + r.status + '）' + String(t).slice(0, 60));
+      });
+    });
+  }
+
+  function pad3(n) { return ('000' + n).slice(-3); }
+
+  function runBatchImport(files) {
+    var list = Array.prototype.slice.call(files).filter(function (f) { return /^image\//.test(f.type); });
+    if (!list.length) { toast('没有选到图片', { type: 'err' }); return; }
+    if (list.length > 200) { toast('一次最多 200 张，请分批导入', { type: 'err' }); return; }
+    if (!S.session()) { toast('请先在「云同步」里登录，再导入照片', { type: 'err' }); return; }
+
+    list.sort(function (a, b) {
+      return (a.lastModified || 0) - (b.lastModified || 0) || a.name.localeCompare(b.name);
+    });
+
+    var prefix = (el.batchPrefix.value.trim() || ymd(new Date()).replace(/-/g, '')).replace(/[^0-9A-Za-z_-]/g, '');
+    if (!prefix) { prefix = 'batch'; }
+    var titlePrefix = el.batchTitle.value.trim() || '新书';
+    var category = el.batchCategory.value.trim();
+    var unit = el.batchUnit.value.trim() || '册';
+    var batchDir = prefix + '/' + ymd(new Date()).replace(/-/g, '') + '-' + Date.now().toString(36).slice(-4);
+
+    var total = list.length;
+    var pairs = [];
+    for (var i = 0; i < total; i += 2) { pairs.push(list.slice(i, i + 2)); }
+
+    openModal(
+      modalHead('批量上架', total + ' 张照片 · 共 ' + pairs.length + ' 本') +
+      '<div class="progress"><div class="progress-bar" id="upBar"></div></div>' +
+      '<div class="muted" id="upStatus" style="font-size:12.5px;margin-bottom:10px">准备中…</div>' +
+      '<div class="up-log" id="upLog"></div>'
+    );
+
+    var bar = $('upBar'), statusEl = $('upStatus'), logEl = $('upLog');
+    var done = 0, created = 0, errors = [];
+
+    function tick(text) {
+      done++;
+      if (bar) { bar.style.width = Math.round(done / total * 100) + '%'; }
+      if (statusEl) { statusEl.textContent = text + '（' + done + '/' + total + '）'; }
+    }
+    function log(msg) { if (logEl) { logEl.textContent = msg; } }
+
+    C.ensureSession().then(function () {
+      var chain = Promise.resolve();
+      pairs.forEach(function (pair, idx) {
+        chain = chain.then(function () {
+          var n = pad3(idx + 1);
+          var front = pair[0];
+          var back = pair[1] || null;
+          log('第 ' + (idx + 1) + ' 本：' + front.name);
+          return fileToJpegBlob(front, 1000, 0.72).then(function (b1) {
+            return uploadPhoto(b1, 'covers/' + batchDir + '/f' + n + '.jpg');
+          }).then(function (urlFront) {
+            tick('封面已上传');
+            if (!back) { return { front: urlFront, back: '' }; }
+            return fileToJpegBlob(back, 1000, 0.72).then(function (b2) {
+              return uploadPhoto(b2, 'covers/' + batchDir + '/b' + n + '.jpg');
+            }).then(function (urlBack) {
+              tick('封底已上传');
+              return { front: urlFront, back: urlBack };
+            });
+          }).then(function (urls) {
+            S.createBook({
+              title: titlePrefix + ' ' + (idx + 1),
+              category: category, unit: unit, qty: 1,
+              cover: urls.front, back: urls.back,
+              note: '批量上架：' + front.name + (back ? ' / ' + back.name : '')
+            }, { note: '批量上架' });
+            created++;
+          });
+        }).catch(function (e) {
+          errors.push(front.name + '：' + e.message);
+          log('出错：' + front.name + ' · ' + e.message);
+        });
+      });
+      return chain;
+    }).then(function () {
+      if (statusEl) { statusEl.textContent = '共上架 ' + created + ' 本，正在同步到云端…'; }
+      afterChange();
+      return doSync(true);
+    }).then(function () {
+      closeModal();
+      var msg = '上架完成：' + created + ' 本';
+      if (errors.length) { msg += '，失败 ' + errors.length + ' 组'; }
+      toast(msg, errors.length ? { type: 'err', duration: 6000 } : {});
+      if (errors.length) { console.warn('批量上架失败项：', errors); }
+    }).catch(function (e) {
+      closeModal();
+      toast('批量导入失败：' + e.message, { type: 'err' });
+    });
+  }
+
+
   function openImage(src) {
     openModal(
       modalHead('图片预览', '点右侧 × 关闭') +
@@ -1117,8 +1258,23 @@
       toast(name ? '操作员已设为 ' + name : '已清除操作员');
     });
 
-    if ($('btnCopyShop')) {
-      $('btnCopyShop').addEventListener('click', function () {
+    if ($('btnBatchImport')) {
+      $('btnBatchImport').addEventListener('click', function () {
+        if (!S.session()) {
+          toast('请先在上面「云同步」里登录，再批量导入照片', { type: 'err' });
+          return;
+        }
+        el.filePhotos.value = '';
+        el.filePhotos.click();
+      });
+      el.filePhotos.addEventListener('change', function () {
+        if (el.filePhotos.files && el.filePhotos.files.length) {
+          runBatchImport(el.filePhotos.files);
+        }
+      });
+    }
+
+    if ($('btnCopyShop')) {      $('btnCopyShop').addEventListener('click', function () {
         copyText(shopUrl()).then(function () { toast('顾客页链接已复制'); })
           .catch(function () { toast('复制失败，请手动选中链接', { type: 'err' }); });
       });
@@ -1289,6 +1445,12 @@
       authPwd: $('authPwd'),
       operatorInput: $('operatorInput'),
       shopLink: $('shopLink'),
+      batchPrefix: $('batchPrefix'),
+      batchTitle: $('batchTitle'),
+      batchCategory: $('batchCategory'),
+      batchUnit: $('batchUnit'),
+      btnBatchImport: $('btnBatchImport'),
+      filePhotos: $('filePhotos'),
       fileCsv: $('fileCsv'),
       fileJson: $('fileJson')
     };
