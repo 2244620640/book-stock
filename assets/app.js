@@ -761,6 +761,60 @@
 
   function pad3(n) { return ('000' + n).slice(-3); }
 
+  function runNetworkDiag() {
+    var box = el.diagOut;
+    if (!box) { return; }
+    var lines = [];
+    function paint() { box.textContent = lines.join('\n'); }
+    function add(t) { lines.push(t); paint(); }
+
+    function probe(label, url, opts) {
+      var t0 = Date.now();
+      var init = Object.assign({ cache: 'no-store' }, opts || {});
+      var ctrl = null;
+      if (window.AbortController) {
+        ctrl = new AbortController();
+        init.signal = ctrl.signal;
+        setTimeout(function () { try { ctrl.abort(); } catch (e) { } }, 8000);
+      }
+      return fetch(url, init).then(function (r) {
+        add('✅ ' + label + ' · HTTP ' + r.status + ' · ' + (Date.now() - t0) + 'ms');
+        return true;
+      }).catch(function (e) {
+        var msg = (e && e.name === 'AbortError') ? '超时(8s)' : ((e && e.message) || '网络错误');
+        add('❌ ' + label + ' · ' + msg + ' · ' + (Date.now() - t0) + 'ms');
+        return false;
+      });
+    }
+
+    lines = [];
+    paint();
+    add('检测时间 ' + new Date().toLocaleString());
+    add('页面来源 ' + location.origin);
+    add('');
+
+    var cfg = C.config();
+    probe('① 站点文件 config.json（同源）', 'config.json?t=' + Date.now())
+      .then(function (ok) {
+        add(ok ? '   地址: ' + (cfg.url || '（空）') : '   地址: ' + (cfg.url || '（空）'));
+        return probe('② Supabase 数据库', (cfg.url || 'https://x') + '/rest/v1/catalog?select=id&limit=1', { headers: { apikey: cfg.key } });
+      })
+      .then(function () {
+        return probe('③ Supabase 登录服务', (cfg.url || 'https://x') + '/auth/v1/settings', { headers: { apikey: cfg.key } });
+      })
+      .then(function () {
+        return probe('④ GitHub API（备用通道）', 'https://api.github.com/rate_limit');
+      })
+      .then(function () {
+        add('');
+        var s = S.session();
+        add(s ? '👤 已登录：' + (s.email || '') : '👤 未登录云同步（上传照片前必须登录）');
+        add('');
+        add('②③ 都失败 → 当前网络连不上 Supabase，换 WiFi 或用加速器；');
+        add('②③ 成功但上传失败 → 检查 Storage 桶 covers 是否存在。');
+      });
+  }
+
   function runBatchImport(files) {
     var list = Array.prototype.slice.call(files).filter(function (f) { return /^image\//.test(f.type); });
     if (!list.length) { toast('没有选到图片', { type: 'err' }); return; }
@@ -1272,6 +1326,24 @@
           runBatchImport(el.filePhotos.files);
         }
       });
+
+      $('btnCameraImport').addEventListener('click', function () {
+        if (!S.session()) {
+          toast('请先在上面「云同步」里登录，再拍照上传', { type: 'err' });
+          return;
+        }
+        el.fileCamera.value = '';
+        el.fileCamera.click();
+      });
+      el.fileCamera.addEventListener('change', function () {
+        if (el.fileCamera.files && el.fileCamera.files.length) {
+          runBatchImport(el.fileCamera.files);
+        }
+      });
+    }
+
+    if ($('btnDiag')) {
+      $('btnDiag').addEventListener('click', function () { runNetworkDiag(); });
     }
 
     if ($('btnCopyShop')) {      $('btnCopyShop').addEventListener('click', function () {
@@ -1450,6 +1522,10 @@
       batchCategory: $('batchCategory'),
       batchUnit: $('batchUnit'),
       btnBatchImport: $('btnBatchImport'),
+      btnCameraImport: $('btnCameraImport'),
+      fileCamera: $('fileCamera'),
+      btnDiag: $('btnDiag'),
+      diagOut: $('diagOut'),
       filePhotos: $('filePhotos'),
       fileCsv: $('fileCsv'),
       fileJson: $('fileJson')
