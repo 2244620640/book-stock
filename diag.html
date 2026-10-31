@@ -1,17 +1,18 @@
 <!doctype html><meta charset=utf-8><body><pre id=o>running</pre>
 <script>
-const U='https://llzbyzuoklyoxaaxxbmq.supabase.co/rest/v1/catalog?select=id&limit=1';
+const U='https://llzbyzuoklyoxaaxxbmq.supabase.co/rest/v1/catalog?select=*&order=title.asc&limit=2000';
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsemJ5enVva2x5b3hhYXh4Ym1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NjE1OTAsImV4cCI6MjEwOTAzNzU5MH0.DSWlrQG7wiDgyd6QBA3woV4S0I_ogaxKytIZCT_5Rq8';
 (async()=>{
  const out=[];
  let t0=Date.now();
- try { const r=await fetch(U,{headers:{apikey:K}}); const t=await r.text(); out.push('apikey=OK '+r.status+' '+(Date.now()-t0)+'ms '+t.slice(0,40)); }
- catch(e){ out.push('apikey=FAIL '+e.name+' "'+e.message+'" '+(Date.now()-t0)+'ms'); }
- t0=Date.now();
- try { const r=await fetch(U); out.push('plain=OK '+r.status+' '+(Date.now()-t0)+'ms'); }
- catch(e){ out.push('plain=FAIL '+e.name+' "'+e.message+'"'); }
- try { const r=await fetch(U,{mode:'no-cors'}); out.push('nocors=type:'+r.type); }
- catch(e){ out.push('nocors=FAIL '+e.name); }
+ try {
+   const r=await fetch(U,{headers:{apikey:K,Accept:'application/json'}});
+   out.push('status='+r.status+' ok='+r.ok+' type='+r.type+' ct='+(r.headers.get('content-type')||'-')+' '+(Date.now()-t0)+'ms');
+   const txt=await r.text();
+   out.push('len='+txt.length);
+   try { const j=JSON.parse(txt); out.push('json rows='+(Array.isArray(j)?j.length:'notarray')); }
+   catch(e){ out.push('jsonERR '+e.message+' head='+txt.slice(0,80)); }
+ } catch(e){ out.push('FETCH FAIL '+e.name+' '+e.message+' '+(Date.now()-t0)+'ms'); }
  document.getElementById('o').textContent=out.join(' || ');
 })();
 </script>
