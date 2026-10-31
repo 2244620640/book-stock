@@ -113,7 +113,10 @@
       saveAuth(data, email);
       return Store.session();
     }, function (err) {
+      if (err.network) { throw new Error('连不上登录服务：网络超时或被拦截（不是密码问题）'); }
       if (err.status === 400) { throw new Error('邮箱或密码不正确'); }
+      if (err.status === 422) { throw new Error('邮箱格式不对，或账号不存在'); }
+      if (err.status === 429) { throw new Error('尝试太频繁，等 1 分钟再试'); }
       throw err;
     });
   }
