@@ -15,7 +15,7 @@
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32">
 <link rel="icon" href="icons/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="assets/app.css?v=20261101g">
+<link rel="stylesheet" href="assets/app.css?v=20261101h">
 </head>
 <body>
 
@@ -241,10 +241,21 @@
           </div>
         </div>
         <button class="btn primary block" id="btnBatchImport" type="button">选择照片并导入</button>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn sm" id="btnCameraImport" type="button">📷 拍一张直接上传</button>
+        </div>
         <div class="hint" style="margin-top:8px">
           按拍摄时间排序，<b>每 2 张合成一本</b>（第 1 张封面、第 2 张封底）；单张也行。一次最多 200 张。
         </div>
         <input type="file" id="filePhotos" accept="image/*" multiple hidden>
+        <input type="file" id="fileCamera" accept="image/*" capture="environment" hidden>
+      </div>
+
+      <div class="settings-card">
+        <h3>网络检测</h3>
+        <p class="desc">手机连不上、传不了照片时，点一下看看断在哪一步。</p>
+        <button class="btn sm" id="btnDiag" type="button">开始检测</button>
+        <div class="up-log" id="diagOut" style="margin-top:10px;white-space:pre-wrap"></div>
       </div>
 
       <div class="settings-card">
@@ -291,8 +302,8 @@
   <div style="padding:40px 20px;text-align:center">本项目需要浏览器开启 JavaScript 才能使用。</div>
 </noscript>
 
-<script src="assets/store.js?v=20261101g"></script>
-<script src="assets/cloud.js?v=20261101g"></script>
-<script src="assets/app.js?v=20261101g"></script>
+<script src="assets/store.js?v=20261101h"></script>
+<script src="assets/cloud.js?v=20261101h"></script>
+<script src="assets/app.js?v=20261101h"></script>
 </body>
 </html>
