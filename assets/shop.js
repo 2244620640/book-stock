@@ -102,11 +102,23 @@
 
   function fetchCatalog(cfg) {
     var url = cfg.url + '/rest/v1/catalog?select=*&order=title.asc&limit=2000';
-    return fetch(url, { headers: { apikey: cfg.key, Accept: 'application/json' } }).then(function (res) {
-      if (!res.ok) { throw new Error('读取库存失败（HTTP ' + res.status + '）'); }
+    var ctrl = null;
+    var timer = null;
+    var init = { headers: { apikey: cfg.key, Accept: 'application/json' } };
+    if (typeof AbortController === 'function') {
+      ctrl = new AbortController();
+      init.signal = ctrl.signal;
+      timer = setTimeout(function () { ctrl.abort(); }, 6000); // 网络被拦时别干等
+    }
+    return fetch(url, init).then(function (res) {
+      if (timer) { clearTimeout(timer); }
+      if (!res.ok) { throw new Error('HTTP ' + res.status); }
       return res.json();
     }).then(function (rows) {
       return { rows: rows || [], mode: 'cloud' };
+    }, function (e) {
+      if (timer) { clearTimeout(timer); }
+      throw new Error(e && e.name === 'AbortError' ? '连接超时' : '无法连接数据库');
     });
   }
 
