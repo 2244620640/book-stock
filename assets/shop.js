@@ -189,7 +189,7 @@
     } else if (state.mode === 'static') {
       dot = state.degraded ? 'err' : '';
       text = '共 ' + available().length + ' 种在售 · 静态快照 ' + fmtTime(state.at) +
-        (state.degraded ? '（云端未连上）' : '');
+        (state.degraded ? ' · ' + state.degraded : '');
     } else if (state.mode === 'cache') {
       dot = 'err';
       text = '离线缓存 · 上次更新 ' + fmtTime(state.at);
@@ -429,7 +429,7 @@
       return fetchCatalog(cfg).catch(function (e) {
         return fetchStatic().then(function (res) {
           res.mode = 'static';
-          res.degraded = '云端连不上，显示的是静态快照（' + (e && e.message ? e.message : '网络错误') + '）';
+          res.degraded = '云端连不上（' + (e && e.message ? e.message : '网络错误') + '），显示的是静态快照';
           return res;
         });
       });
