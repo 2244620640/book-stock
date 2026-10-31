@@ -173,10 +173,11 @@
     var dot = '';
     if (state.mode === 'cloud') {
       dot = 'on';
-      text = '共 ' + available().length + ' 种在售 · 更新于 ' + fmtTime(state.at);
+      text = '共 ' + available().length + ' 种在售 · 实时库存';
     } else if (state.mode === 'static') {
-      dot = '';
-      text = '共 ' + available().length + ' 种在售 · 静态清单 ' + fmtTime(state.at);
+      dot = state.degraded ? 'err' : '';
+      text = '共 ' + available().length + ' 种在售 · 静态快照 ' + fmtTime(state.at) +
+        (state.degraded ? '（云端未连上）' : '');
     } else if (state.mode === 'cache') {
       dot = 'err';
       text = '离线缓存 · 上次更新 ' + fmtTime(state.at);
@@ -411,33 +412,47 @@
     el.shopDot.className = 'dot sync';
 
     return readConfig().then(function (cfg) {
-      if (cfg) { return fetchCatalog(cfg); }
-      return fetchStatic();
+      if (!cfg) { return fetchStatic(); }
+      // 优先实时数据；连不上就退回站点里的静态快照（换网络/被墙时也能看到东西）
+      return fetchCatalog(cfg).catch(function (e) {
+        return fetchStatic().then(function (res) {
+          res.mode = 'static';
+          res.degraded = '云端连不上，显示的是静态快照（' + (e && e.message ? e.message : '网络错误') + '）';
+          return res;
+        });
+      });
     }).then(function (res) {
       state.rows = (res.rows || []).map(normalize).filter(function (b) { return b.id && b.title; });
       state.mode = res.mode;
+      state.degraded = res.degraded || '';
       state.at = new Date().toISOString();
       saveCache();
       render();
-      if (manual) { toast('库存已刷新'); }
+      if (manual) { toast(state.degraded || '库存已刷新', state.degraded ? 'err' : undefined); }
     }).catch(function (err) {
       var cached = loadCache();
       if (cached) {
         state.rows = (cached.rows || []).map(normalize);
         state.at = cached.at;
         state.mode = 'cache';
+        state.degraded = '';
         render();
         if (manual) { toast('网络不可用，显示的是上次缓存', 'err'); }
       } else {
         state.rows = [];
         state.mode = '';
+        state.degraded = '';
         render();
         showNotice(
-          '<h3>还没有连接库存</h3>' +
-          '<p>把站点目录里的 <code>config.json</code> 填上 Supabase 的 <b>Project URL</b> 和 <b>anon public key</b>，' +
-          '并确认已经执行过 <code>supabase-schema.sql</code> 里的 <code>catalog</code> 视图，顾客就能看到实时库存了。</p>' +
-          '<p style="color:var(--muted);font-size:12px">本机预览时，先在管理页登录一次，这里会自动借用那份配置。</p>'
+          '<h3>连不上库存</h3>' +
+          '<p>网络能打开这个页面，但连不上数据库：<code>' +
+          esc(String((err && err.message) || err || '未知错误').slice(0, 120)) + '</code></p>' +
+          '<p>常见原因：当前网络（尤其手机流量）拦截了 <code>*.supabase.co</code>，或者数据库暂时不可用。' +
+          '换个网络（比如 WiFi）再试，多数情况能恢复。</p>' +
+          '<p><button class="btn primary sm" id="noticeRetry" type="button">重试</button></p>'
         );
+        var rb = $('noticeRetry');
+        if (rb) { rb.addEventListener('click', function () { load(true); }); }
       }
     });
   }
