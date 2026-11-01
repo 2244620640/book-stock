@@ -166,6 +166,26 @@
     } catch (e) { /* 忽略 */ }
   }
 
+  function fetchPublicVisits(cfg) {
+    return fetch(cfg.url + '/rest/v1/visit_public?select=*', {
+      headers: { apikey: cfg.key, Accept: 'application/json' }
+    }).then(function (r) {
+      if (!r.ok) { return null; }
+      return r.json();
+    }).then(function (rows) {
+      return (rows && rows[0]) ? rows[0] : null;
+    }).catch(function () { return null; });
+  }
+
+  function renderPublicVisits(d) {
+    if (!el.shopVisitors) { return; }
+    if (!d || !Number(d.visitors)) { el.shopVisitors.hidden = true; return; }
+    el.shopVisitors.hidden = false;
+    el.shopVisitors.innerHTML =
+      '<span class="sv-dot"></span>已有 <b>' + Number(d.visitors).toLocaleString('zh-CN') + '</b> 位访客来过' +
+      (Number(d.visitors_today) ? '，今天 ' + Number(d.visitors_today) + ' 位' : '');
+  }
+
   function readConfig() {
     return fetch('config.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : {}; })
@@ -701,6 +721,7 @@
 
     return readConfig().then(function (cfg) {
       if (!cfg) { return fetchStatic(); }
+      state.cfg = cfg;
       trackVisit(cfg);
       // 优先实时数据；连不上就退回站点里的静态快照（换网络/被墙时也能看到东西）
       return fetchCatalog(cfg).catch(function (e) {
@@ -722,6 +743,9 @@
       state.at = new Date().toISOString();
       saveCache();
       render();
+      if (res.mode === 'cloud' && state.cfg) {
+        fetchPublicVisits(state.cfg).then(renderPublicVisits);
+      }
       if (manual) { toast(state.degraded || '库存已刷新', state.degraded ? 'err' : undefined); }
     }).catch(function (err) {
       var cached = loadCache();
@@ -761,6 +785,7 @@
       shopGrid: $('shopGrid'),
       shopEmpty: $('shopEmpty'),
       shopCount: $('shopCount'),
+      shopVisitors: $('shopVisitors'),
       btnRefresh: $('btnRefresh'),
       btnCart: $('btnCart'),
       cartBadge: $('cartBadge'),
