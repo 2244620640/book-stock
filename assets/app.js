@@ -527,6 +527,16 @@
     if (s && s.email) { el.authEmail.value = s.email; }
     updateCloudStatus();
     updateShopLink();
+    if (el.contactInput) {
+      el.contactInput.value = S.settings().contact || '';
+      C.getSetting('contact').then(function (v) {
+        if (typeof v === 'string' && v !== S.settings().contact) {
+          el.contactInput.value = v;
+          S.saveSettings({ contact: v });
+        }
+        if (el.contactHint) { el.contactHint.textContent = v ? '已从云端读取' : ''; }
+      }).catch(function () { /* 离线时用本机保存的 */ });
+    }
   }
 
   function shopUrl() {
@@ -1418,11 +1428,34 @@
     });
 
     // 设置
-    $('saveOperator').addEventListener('click', function () {
-      var name = el.operatorInput.value.trim();
-      S.saveSettings({ operator: name });
-      toast(name ? '操作员已设为 ' + name : '已清除操作员');
-    });
+    if ($('saveOperator')) {
+      $('saveOperator').addEventListener('click', function () {
+        var name = el.operatorInput.value.trim();
+        S.saveSettings({ operator: name });
+        toast(name ? '操作员已设为 ' + name : '已清除操作员');
+      });
+    }
+
+    if (el.saveContact) {
+      el.saveContact.addEventListener('click', function () {
+        var text = el.contactInput.value.trim();
+        S.saveSettings({ contact: text });
+        if (!S.session()) {
+          toast('已保存到本机；登录云同步后才能让顾客看到', { type: 'err', duration: 5000 });
+          if (el.contactHint) { el.contactHint.textContent = '仅本机'; }
+          return;
+        }
+        el.saveContact.disabled = true;
+        C.saveSetting('contact', text).then(function () {
+          el.saveContact.disabled = false;
+          if (el.contactHint) { el.contactHint.textContent = '已同步 · 顾客页刷新可见'; }
+          toast('联系方式已更新');
+        }).catch(function (e) {
+          el.saveContact.disabled = false;
+          toast('保存失败：' + (e.message || '网络错误'), { type: 'err' });
+        });
+      });
+    }
 
     if ($('btnBatchImport')) {
       // 只有「按拍摄间隔」才需要填秒数
@@ -1653,6 +1686,9 @@
       authEmail: $('authEmail'),
       authPwd: $('authPwd'),
       operatorInput: $('operatorInput'),
+      contactInput: $('contactInput'),
+      contactHint: $('contactHint'),
+      saveContact: $('saveContact'),
       shopLink: $('shopLink'),
       batchPrefix: $('batchPrefix'),
       batchTitle: $('batchTitle'),
