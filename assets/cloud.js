@@ -320,6 +320,27 @@
       });
   }
 
+  /* ---------------- 访客统计（管理端） ---------------- */
+
+  function loadVisits() {
+    return ensureSession().then(function () {
+      var h = withAuth({ Accept: 'application/json' });
+      return rawRequest('/rest/v1/visit_stats?select=*', { headers: h }).then(function (stats) {
+        return rawRequest('/rest/v1/visit_daily?select=day,visits,visitors&order=day.desc&limit=30', { headers: h })
+          .then(function (daily) {
+            return rawRequest('/rest/v1/visits?select=created_at,device,referrer&order=created_at.desc&limit=12', { headers: h })
+              .then(function (recent) {
+                return {
+                  stats: (stats && stats[0]) || null,
+                  daily: daily || [],
+                  recent: recent || []
+                };
+              });
+          });
+      });
+    });
+  }
+
   global.Cloud = {
     config: config,
     isConfigured: isConfigured,
@@ -330,6 +351,7 @@
     refresh: refresh,
     ensureSession: ensureSession,
     sync: sync,
+    loadVisits: loadVisits,
     testConnection: testConnection,
     busy: function () { return CLOUD.busy; },
     lastError: function () { return CLOUD.lastError; }
