@@ -208,11 +208,15 @@
       return;
     }
     var s = d.stats || {};
-    var html = '<div class="kpis" style="margin-bottom:14px">' +
+    var html = '<div class="kpis" style="margin-bottom:12px">' +
       smallKpi('今日访问', s.visits_today, '次') +
       smallKpi('今日访客', s.visitors_today, '人') +
-      smallKpi('近 7 天访客', s.visitors_7d, '人') +
+      smallKpi('有效访客', s.valid_visitors_total, '人') +
       smallKpi('累计访客', s.visitors_total, '人') +
+      '</div>' +
+      '<div class="muted" style="font-size:11.5px;margin:-4px 0 12px">' +
+      '有效访问 ' + fmtInt(s.valid_visits_total) + ' 次 · 今日有效访客 ' + fmtInt(s.valid_visitors_today) +
+      ' 人 · 近 7 天访客 ' + fmtInt(s.visitors_7d) + ' 人（有效 ' + fmtInt(s.valid_visitors_7d) + ' 人）' +
       '</div>';
 
     var days = (d.daily || []).slice(0, 7).slice().reverse();
@@ -230,19 +234,23 @@
 
     var recent = d.recent || [];
     html += '<div style="border-top:1px dashed var(--line);padding-top:10px">' +
-      '<div class="muted" style="font-size:12px;margin-bottom:4px">最近访问</div>';
+      '<div class="muted" style="font-size:12px;margin-bottom:6px">全部访问记录（' + recent.length + ' 条）</div>';
     if (recent.length) {
-      html += recent.map(function (r) {
-        return '<div class="log" style="grid-template-columns:1fr auto;padding:8px 0;border-bottom:0">' +
+      html += '<div class="vr-list">' + recent.map(function (r) {
+        var dwell = Number(r.dwell_sec) || 0;
+        return '<div class="vr-row">' +
           '<div style="min-width:0">' +
-            '<div class="t" style="font-size:13px">' + esc(r.device || '未知设备') +
-              '<span class="muted" style="font-weight:400;font-size:11.5px"> · ' + esc(r.ip || 'IP 未知') + '</span>' +
-            '</div>' +
-            (r.referrer ? '<div class="s">来自 ' + esc(r.referrer) + '</div>' : '') +
+            '<div class="vr-t">' + esc(r.device || '未知设备') +
+              '<span class="muted" style="font-weight:400"> · ' + esc(r.ip || 'IP 未知') + '</span></div>' +
+            '<div class="vr-s">' + (r.referrer ? '来自 ' + esc(r.referrer) + ' · ' : '') +
+              (dwell ? '停留 ' + dwell + ' 秒' : '停留 < 15 秒') + '</div>' +
           '</div>' +
-          '<div class="when" style="font-size:11.5px;white-space:nowrap">' + esc(S.fmtLocal(r.created_at)) + '</div>' +
-          '</div>';
-      }).join('');
+          '<div class="vr-side">' +
+            (r.engaged ? '<span class="vr-pill ok">有效</span>' : '<span class="vr-pill">跳出</span>') +
+            '<div class="when">' + esc(S.fmtLocal(r.created_at)) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('') + '</div>';
     } else {
       html += '<div class="muted" style="font-size:12.5px;text-align:center;padding:10px 0">还没有访问记录</div>';
     }
