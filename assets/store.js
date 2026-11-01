@@ -108,7 +108,7 @@
       v: SCHEMA,
       books: [],
       logs: [],
-      settings: { operator: '', view: 'overview', seeded: false },
+      settings: { operator: '', contact: '', view: 'overview', seeded: false },
       cloud: { url: '', key: '', email: '', lastSyncAt: '' },
       session: null
     };
