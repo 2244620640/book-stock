@@ -165,6 +165,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+  line-height: 1.5;
 }
 .shop-visitors b { color: var(--ink-2); font-weight: 650; }
 .shop-visitors .sv-dot {
