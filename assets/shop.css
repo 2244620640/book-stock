@@ -275,48 +275,42 @@
 
 /* ---------------- 商品详情 ---------------- */
 
-.detail-gallery {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-  margin-bottom: 14px;
-  max-height: 46vh;
-  overflow-y: auto;
+.dg-wrap { position: relative; margin-bottom: 14px; }
+.dg-track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  border-radius: 12px;
 }
-.detail-gallery .dg-item {
-  margin: 0;
-  border-radius: 10px;
+.dg-track::-webkit-scrollbar { display: none; }
+.dg-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  border-radius: 12px;
   overflow: hidden;
-  background: var(--surface-3);
+  background: var(--surface-2);
   aspect-ratio: 3 / 4;
   border: 1px solid var(--line);
 }
-.detail-gallery .dg-item img {
+.dg-slide img {
   width: 100%; height: 100%; object-fit: contain; display: block;
-  background: var(--surface-2);
   cursor: zoom-in;
-}
-
-/* 图片全屏查看 */
-.drawer.imgview { align-items: center; padding: 16px; }
-.imgview img {
-  max-width: 94vw;
-  max-height: 86vh;
-  object-fit: contain;
-  border-radius: 10px;
-  box-shadow: var(--shadow-lg);
-  cursor: zoom-out;
-}
-.detail-gallery.empty-g {
-  display: block;
-  text-align: center;
-  padding: 40px 0;
-  color: var(--muted);
-  font-size: 13px;
   background: var(--surface-2);
-  border-radius: 10px;
 }
-
+.dg-counter {
+  position: absolute; right: 8px; bottom: 8px;
+  font-size: 11px; padding: 2px 9px; border-radius: 999px;
+  background: rgba(27, 36, 32, .66); color: #fff;
+  backdrop-filter: blur(4px);
+}
+.dg-empty {
+  text-align: center; padding: 40px 0;
+  color: var(--muted); font-size: 13px;
+  background: var(--surface-2); border-radius: 10px; margin-bottom: 14px;
+}
 .detail-rows { border-top: 1px solid var(--line); }
 .detail-rows > div {
   display: grid;
@@ -331,3 +325,19 @@
 .detail-rows .st-ok { color: var(--ok); }
 .detail-rows .st-out { color: var(--danger); }
 .detail-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* 图片全屏查看（层级要高于详情层） */
+.drawer.imgview {
+  z-index: 90;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.imgview img {
+  max-width: 94vw;
+  max-height: 86vh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  cursor: zoom-out;
+}
