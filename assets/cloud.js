@@ -184,6 +184,7 @@
       unit: b.unit,
       note: b.note,
       tags: b.tags || '',
+      sold_out_at: b.soldOutAt || null,
       cover: b.cover || '',
       back: b.back || '',
       photos: b.photos || '',
