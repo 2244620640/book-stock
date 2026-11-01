@@ -330,7 +330,7 @@
       return rawRequest('/rest/v1/visit_stats?select=*', { headers: h }).then(function (stats) {
         return rawRequest('/rest/v1/visit_daily?select=day,visits,visitors&order=day.desc&limit=30', { headers: h })
           .then(function (daily) {
-            return rawRequest('/rest/v1/visits?select=created_at,device,referrer,ip&order=created_at.desc&limit=12', { headers: h })
+            return rawRequest('/rest/v1/visits?select=created_at,device,referrer,ip,dwell_sec,engaged&order=created_at.desc&limit=300', { headers: h })
               .then(function (recent) {
                 return {
                   stats: (stats && stats[0]) || null,
