@@ -221,6 +221,34 @@
     return String(b.photos).split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
   }
 
+  /**
+   * 把一批照片分组成「一本一本」。
+   * @param {Array} list 已按时间排序的文件数组（需有 lastModified、name）
+   * @param {string} mode 'gap' 按拍摄间隔 | 'pair' 每 2 张 | 'each' 每张 | 'all' 全部
+   * @param {number} gapSec 间隔秒数（mode=gap 时生效）
+   */
+  function groupPhotos(list, mode, gapSec) {
+    if (!list || !list.length) { return []; }
+    if (mode === 'all') { return [list]; }
+    if (mode === 'each') { return list.map(function (f) { return [f]; }); }
+    if (mode === 'pair') {
+      var pairs = [];
+      for (var i = 0; i < list.length; i += 2) { pairs.push(list.slice(i, i + 2)); }
+      return pairs;
+    }
+    var gap = Math.max(1, Number(gapSec) || 30) * 1000;
+    var groups = [];
+    var cur = [list[0]];
+    for (var j = 1; j < list.length; j++) {
+      var prev = Number(list[j - 1].lastModified) || 0;
+      var now = Number(list[j].lastModified) || 0;
+      if (now - prev > gap) { groups.push(cur); cur = []; }
+      cur.push(list[j]);
+    }
+    if (cur.length) { groups.push(cur); }
+    return groups;
+  }
+
   function stats() {
     var list = books();
     var out = { titles: list.length, qty: 0, value: 0, warn: 0, out: 0, low: 0, categories: 0 };
@@ -837,6 +865,7 @@
     isOut: isOut,
     isWarn: isWarn,
     photoList: photoList,
+    groupPhotos: groupPhotos,
 
     createBook: createBook,
     updateBook: updateBook,
