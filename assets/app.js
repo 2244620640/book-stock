@@ -897,7 +897,7 @@
   function runBatchImport(files) {
     var list = Array.prototype.slice.call(files).filter(function (f) { return /^image\//.test(f.type); });
     if (!list.length) { toast('没有选到图片', { type: 'err' }); return; }
-    if (list.length > 200) { toast('一次最多 200 张，请分批导入', { type: 'err' }); return; }
+    if (list.length > 600) { toast('一次最多 600 张，请分批导入', { type: 'err' }); return; }
     if (!S.session()) { toast('请先在「云同步」里登录，再导入照片', { type: 'err' }); return; }
 
     list.sort(function (a, b) {
@@ -909,14 +909,15 @@
     var titlePrefix = el.batchTitle.value.trim() || '新书';
     var category = el.batchCategory.value.trim();
     var unit = el.batchUnit.value.trim() || '册';
+    var mode = el.batchGroupMode ? el.batchGroupMode.value : 'gap';
+    var gapSec = Math.max(5, parseInt(el.batchGap ? el.batchGap.value : 30, 10) || 30);
     var batchDir = prefix + '/' + ymd(new Date()).replace(/-/g, '') + '-' + Date.now().toString(36).slice(-4);
 
     var total = list.length;
-    var pairs = [];
-    for (var i = 0; i < total; i += 2) { pairs.push(list.slice(i, i + 2)); }
+    var groups = S.groupPhotos(list, mode, gapSec);
 
     openModal(
-      modalHead('批量上架', total + ' 张照片 · 共 ' + pairs.length + ' 本') +
+      modalHead('批量上架', total + ' 张照片 · 分成 ' + groups.length + ' 本') +
       '<div class="progress"><div class="progress-bar" id="upBar"></div></div>' +
       '<div class="muted" id="upStatus" style="font-size:12.5px;margin-bottom:10px">准备中…</div>' +
       '<div class="up-log" id="upLog"></div>'
@@ -934,35 +935,36 @@
 
     C.ensureSession().then(function () {
       var chain = Promise.resolve();
-      pairs.forEach(function (pair, idx) {
+      groups.forEach(function (group, idx) {
         chain = chain.then(function () {
           var n = pad3(idx + 1);
-          var front = pair[0];
-          var back = pair[1] || null;
-          log('第 ' + (idx + 1) + ' 本：' + front.name);
-          return fileToJpegBlob(front, 1000, 0.72).then(function (b1) {
-            return uploadPhoto(b1, 'covers/' + batchDir + '/f' + n + '.jpg');
-          }).then(function (urlFront) {
-            tick('封面已上传');
-            if (!back) { return { front: urlFront, back: '' }; }
-            return fileToJpegBlob(back, 1000, 0.72).then(function (b2) {
-              return uploadPhoto(b2, 'covers/' + batchDir + '/b' + n + '.jpg');
-            }).then(function (urlBack) {
-              tick('封底已上传');
-              return { front: urlFront, back: urlBack };
+          var urls = [];
+          log('第 ' + (idx + 1) + ' 本：' + group[0].name + '（共 ' + group.length + ' 张）');
+          var seq = Promise.resolve();
+          group.forEach(function (file, k) {
+            seq = seq.then(function () {
+              return fileToJpegBlob(file, 1000, 0.72).then(function (blob) {
+                return uploadPhoto(blob, 'covers/' + batchDir + '/p' + n + '-' + (k + 1) + '.jpg');
+              }).then(function (url) {
+                urls.push(url);
+                tick('第 ' + (idx + 1) + ' 本 · 第 ' + (k + 1) + '/' + group.length + ' 张');
+              });
             });
-          }).then(function (urls) {
+          });
+          return seq.then(function () {
             S.createBook({
               title: titlePrefix + ' ' + (idx + 1),
               category: category, unit: unit, qty: 1,
-              cover: urls.front, back: urls.back,
-              note: '批量上架：' + front.name + (back ? ' / ' + back.name : '')
-            }, { note: '批量上架' });
+              cover: urls[0] || '',
+              back: urls[1] || '',
+              photos: urls.join('\n'),
+              note: '批量上架：' + group.map(function (f) { return f.name; }).join(' / ')
+            }, { note: '批量上架 ' + group.length + ' 张' });
             created++;
           });
         }).catch(function (e) {
-          errors.push(front.name + '：' + e.message);
-          log('出错：' + front.name + ' · ' + e.message);
+          errors.push('第 ' + (idx + 1) + ' 本：' + e.message);
+          log('出错：第 ' + (idx + 1) + ' 本 · ' + e.message);
         });
       });
       return chain;
@@ -1393,6 +1395,16 @@
     });
 
     if ($('btnBatchImport')) {
+      // 只有「按拍摄间隔」才需要填秒数
+      (function () {
+        var syncGap = function () {
+          if (!el.gapField || !el.batchGroupMode) { return; }
+          el.gapField.style.display = (el.batchGroupMode.value === 'gap') ? '' : 'none';
+        };
+        if (el.batchGroupMode) { el.batchGroupMode.addEventListener('change', syncGap); }
+        syncGap();
+      })();
+
       $('btnBatchImport').addEventListener('click', function () {
         if (!S.session()) {
           toast('请先在上面「云同步」里登录，再批量导入照片', { type: 'err' });
@@ -1616,6 +1628,9 @@
       batchTitle: $('batchTitle'),
       batchCategory: $('batchCategory'),
       batchUnit: $('batchUnit'),
+      batchGroupMode: $('batchGroupMode'),
+      batchGap: $('batchGap'),
+      gapField: $('gapField'),
       btnBatchImport: $('btnBatchImport'),
       btnCameraImport: $('btnCameraImport'),
       fileCamera: $('fileCamera'),
