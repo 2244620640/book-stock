@@ -74,6 +74,22 @@
 
   /* ---------------- 数据 ---------------- */
 
+  // 从 UA 里尽量抠出设备型号（访客去重按 IP + 型号）
+  function deviceModel() {
+    var ua = navigator.userAgent || '';
+    var m = '';
+    var mm = ua.match(/Android[^;]*;\s*([^;)]+?)(?:\s+Build|\))/i);
+    if (mm) { m = mm[1]; }
+    if (!m && /iPhone/i.test(ua)) { m = 'iPhone'; }
+    if (!m && /iPad/i.test(ua)) { m = 'iPad'; }
+    if (!m && /Macintosh/i.test(ua)) { m = 'Mac'; }
+    if (!m && /Windows/i.test(ua)) { m = 'Windows'; }
+    if (!m && /Android/i.test(ua)) { m = 'Android'; }
+    if (!m && /Linux/i.test(ua)) { m = 'Linux'; }
+    if (!m) { m = (window.innerWidth < 768) ? '手机' : '电脑'; }
+    return String(m).replace(/\s+/g, ' ').trim().slice(0, 40);
+  }
+
   function trackVisit(cfg) {
     try {
       var LAST = 'bookstock.visit.at';
@@ -88,7 +104,7 @@
       try {
         ref = String(document.referrer || '').replace(/^https?:\/\//i, '').split('/')[0].slice(0, 80);
       } catch (e) { }
-      var dev = (window.innerWidth < 768) ? '手机' : '电脑';
+      var dev = deviceModel();
       fetch(cfg.url + '/rest/v1/visits', {
         method: 'POST',
         headers: {
