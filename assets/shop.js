@@ -10,6 +10,7 @@
 
   var state = { rows: [], q: '', cat: '', cart: [], mode: '', at: '' };
   var el = {};
+  var visitInsert = null;
 
   /* ---------------- 工具 ---------------- */
 
@@ -147,7 +148,7 @@
       visit.cfg = cfg;
       visit.start = Date.now();
       visit.engaged = false;
-      fetch(cfg.url + '/rest/v1/visits', {
+      return fetch(cfg.url + '/rest/v1/visits', {
         method: 'POST',
         headers: {
           apikey: cfg.key,
@@ -163,7 +164,9 @@
       }).then(function (rows) {
         if (rows && rows[0] && rows[0].id) { visit.id = rows[0].id; }
       }).catch(function () { /* 统计失败不影响浏览 */ });
-    } catch (e) { /* 忽略 */ }
+    } catch (e) {
+      return Promise.resolve();  /* 忽略 */
+    }
   }
 
   function fetchPublicVisits(cfg) {
@@ -177,9 +180,22 @@
     }).catch(function () { return null; });
   }
 
+  var STAT_KEY = 'bookstock.visitstat.v1';
+
+  function savePublicVisits(d) {
+    try { localStorage.setItem(STAT_KEY, JSON.stringify({ d: d, at: Date.now() })); } catch (e) { }
+  }
+
+  function cachedPublicVisits() {
+    try {
+      var c = JSON.parse(localStorage.getItem(STAT_KEY) || 'null');
+      return c && c.d ? c.d : null;
+    } catch (e) { return null; }
+  }
+
   function renderPublicVisits(d) {
     if (!el.shopVisitors) { return; }
-    if (!d || !Number(d.visitors)) { el.shopVisitors.hidden = true; return; }
+    if (!d || !Number(d.visitors)) { return; }   // 没数据时保留上一次显示的，不要清空
     el.shopVisitors.hidden = false;
     el.shopVisitors.innerHTML =
       '<span class="sv-dot"></span>已有 <b>' + Number(d.visitors).toLocaleString('zh-CN') + '</b> 位访客来过' +
@@ -343,17 +359,22 @@
     var dot = '';
     var onSale = available().length;
     var soldOut = state.rows.length - onSale;
-    var suffix = soldOut ? ' · 已售完 ' + soldOut + ' 种' : '';
+    var compact = window.innerWidth < 430;
+    var suffix = soldOut ? (compact ? ' · 售完 ' + soldOut : ' · 已售完 ' + soldOut + ' 种') : '';
     if (state.mode === 'cloud') {
       dot = 'on';
-      text = '共 ' + onSale + ' 种在售' + suffix + ' · 实时库存';
+      text = compact
+        ? '在售 ' + onSale + suffix + ' · 实时'
+        : '共 ' + onSale + ' 种在售' + suffix + ' · 实时库存';
     } else if (state.mode === 'static') {
       dot = state.degraded ? 'err' : '';
-      text = '共 ' + onSale + ' 种在售' + suffix + ' · 静态快照 ' + fmtTime(state.at) +
-        (state.degraded ? ' · ' + state.degraded : '');
+      text = compact
+        ? '在售 ' + onSale + suffix + ' · 快照'
+        : '共 ' + onSale + ' 种在售' + suffix + ' · 静态快照 ' + fmtTime(state.at);
+      if (state.degraded && !compact) { text += ' · ' + state.degraded; }
     } else if (state.mode === 'cache') {
       dot = 'err';
-      text = '离线缓存 · 上次更新 ' + fmtTime(state.at);
+      text = '离线缓存 · ' + fmtTime(state.at);
     }
     el.shopDot.className = 'dot' + (dot ? ' ' + dot : '');
     el.shopStatus.textContent = text || '正在加载…';
@@ -722,7 +743,7 @@
     return readConfig().then(function (cfg) {
       if (!cfg) { return fetchStatic(); }
       state.cfg = cfg;
-      trackVisit(cfg);
+      visitInsert = trackVisit(cfg);
       // 优先实时数据；连不上就退回站点里的静态快照（换网络/被墙时也能看到东西）
       return fetchCatalog(cfg).catch(function (e) {
         // 记下真实原因，方便排查（页面上不显示技术细节）
@@ -743,8 +764,19 @@
       state.at = new Date().toISOString();
       saveCache();
       render();
-      if (res.mode === 'cloud' && state.cfg) {
-        fetchPublicVisits(state.cfg).then(renderPublicVisits);
+
+      // 访客数独立拉取：即使数据库连不上，也先显示上次缓存的人数
+      renderPublicVisits(cachedPublicVisits());
+      if (state.cfg) {
+        // 等本次访问记录写入后再统计，否则可能统计不到自己
+        Promise.resolve(visitInsert).then(function () {
+          return new Promise(function (r) { setTimeout(r, 600); });
+        }).then(function () {
+          return fetchPublicVisits(state.cfg);
+        }).then(function (d) {
+          if (d && Number(d.visitors)) { savePublicVisits(d); }
+          renderPublicVisits(d || cachedPublicVisits());
+        });
       }
       if (manual) { toast(state.degraded || '库存已刷新', state.degraded ? 'err' : undefined); }
     }).catch(function (err) {
@@ -809,6 +841,7 @@
     bind();
     bindEngagement();
     render();
+    renderPublicVisits(cachedPublicVisits());
     load(false);
   }
 
