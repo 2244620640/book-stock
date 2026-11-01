@@ -281,7 +281,7 @@
     if (typeof AbortController === 'function') {
       ctrl = new AbortController();
       init.signal = ctrl.signal;
-      timer = setTimeout(function () { ctrl.abort(); }, 6000); // 网络被拦时别干等
+      timer = setTimeout(function () { ctrl.abort(); }, 4000); // 网络被拦时别干等
     }
     return fetch(url, init).then(function (res) {
       if (timer) { clearTimeout(timer); }
@@ -781,40 +781,55 @@
 
   /* ---------------- 启动 ---------------- */
 
+  function applyResult(res) {
+    state.rows = (res.rows || []).map(normalize).filter(function (b) { return b.id && b.title; });
+    state.mode = res.mode;
+    state.degraded = res.degraded || '';
+    state.at = new Date().toISOString();
+    if (res.mode !== 'cache') { saveCache(); }
+    render();
+  }
+
+  // 加载顺序：本地缓存秒开 → 同源静态快照（国内必通）→ 云端实时（能连才升级）
   function load(manual) {
-    el.shopStatus.textContent = '正在加载…';
-    el.shopDot.className = 'dot sync';
+    if (!state.rows.length) {
+      el.shopStatus.textContent = '正在加载…';
+      el.shopDot.className = 'dot sync';
+    }
+
+    var hadStatic = false;
 
     return readConfig().then(function (cfg) {
-      if (!cfg) { return fetchStatic(); }
       state.cfg = cfg;
-      visitInsert = trackVisit(cfg);
-      // 优先实时数据；连不上就退回站点里的静态快照（换网络/被墙时也能看到东西）
-      return fetchCatalog(cfg).catch(function (e) {
-        // 记下真实原因，方便排查（页面上不显示技术细节）
-        try {
-          document.documentElement.setAttribute('data-cloud-error',
-            (e && e.name ? e.name : '?') + ' | ' + (e && e.message ? e.message : '') + ' | ' + cfg.url);
-        } catch (err) { /* ignore */ }
-        return fetchStatic().then(function (res) {
-          res.mode = 'static';
-          res.degraded = '云端连不上（' + (e && e.message ? e.message : '网络错误') + '），显示的是静态快照';
-          return res;
+      if (cfg) { visitInsert = trackVisit(cfg); }
+
+      return fetchStatic().then(function (res) {
+        hadStatic = true;
+        applyResult(res);
+      }, function () { /* 没有快照也不致命 */ }).then(function () {
+        if (!cfg) {
+          if (!hadStatic && !state.rows.length) { throw new Error('没有云端配置，也没有静态快照'); }
+          return;
+        }
+        // 云端能连就升级成实时数据
+        return fetchCatalog(cfg).then(function (res) {
+          applyResult(res);
+        }).catch(function (e) {
+          try {
+            document.documentElement.setAttribute('data-cloud-error',
+              (e && e.name ? e.name : '?') + ' | ' + (e && e.message ? e.message : '') + ' | ' + cfg.url);
+          } catch (err) { /* ignore */ }
+          if (!hadStatic && !state.rows.length) { throw e; }
+          state.mode = 'static';
+          state.degraded = '云端连不上（' + (e && e.message ? e.message : '网络错误') + '）';
+          renderStatus();
         });
       });
-    }).then(function (res) {
-      state.rows = (res.rows || []).map(normalize).filter(function (b) { return b.id && b.title; });
-      state.mode = res.mode;
-      state.degraded = res.degraded || '';
-      state.at = new Date().toISOString();
-      saveCache();
-      render();
-
-      // 访客数独立拉取：即使数据库连不上，也先显示上次缓存的人数
+    }).then(function () {
+      // 访客数与联系方式独立拉取，不影响库存显示
       renderPublicVisits(cachedPublicVisits());
       loadContact(state.cfg);
       if (state.cfg) {
-        // 等本次访问记录写入后再统计，否则可能统计不到自己
         Promise.resolve(visitInsert).then(function () {
           return new Promise(function (r) { setTimeout(r, 600); });
         }).then(function () {
@@ -827,32 +842,31 @@
       if (manual) { toast(state.degraded || '库存已刷新', state.degraded ? 'err' : undefined); }
     }).catch(function (err) {
       var cached = loadCache();
-      if (cached) {
-        state.rows = (cached.rows || []).map(normalize);
+      if (cached && cached.rows && cached.rows.length) {
+        state.rows = cached.rows.map(normalize);
         state.at = cached.at;
         state.mode = 'cache';
         state.degraded = '';
         render();
         if (manual) { toast('网络不可用，显示的是上次缓存', 'err'); }
-      } else {
-        state.rows = [];
-        state.mode = '';
-        state.degraded = '';
-        render();
-        showNotice(
-          '<h3>连不上库存</h3>' +
-          '<p>网络能打开这个页面，但连不上数据库：<code>' +
-          esc(String((err && err.message) || err || '未知错误').slice(0, 120)) + '</code></p>' +
-          '<p>常见原因：当前网络（尤其手机流量）拦截了 <code>*.supabase.co</code>，或者数据库暂时不可用。' +
-          '换个网络（比如 WiFi）再试，多数情况能恢复。</p>' +
-          '<p><button class="btn primary sm" id="noticeRetry" type="button">重试</button></p>'
-        );
-        var rb = $('noticeRetry');
-        if (rb) { rb.addEventListener('click', function () { load(true); }); }
+        return;
       }
+      state.rows = [];
+      state.mode = '';
+      state.degraded = '';
+      render();
+      showNotice(
+        '<h3>连不上库存</h3>' +
+        '<p>这个页面能打开，但连不上任何数据源：<code>' +
+        esc(String((err && err.message) || err || '未知错误').slice(0, 120)) + '</code></p>' +
+        '<p>常见原因：当前网络拦截了 <code>supabase.co</code>（手机流量常见），或者数据库暂时不可用。' +
+        '换个网络（比如 WiFi）再试。</p>' +
+        '<p><button class="btn primary sm" id="noticeRetry" type="button">重试</button></p>'
+      );
+      var rb = $('noticeRetry');
+      if (rb) { rb.addEventListener('click', function () { load(true); }); }
     });
   }
-
   function init() {
     el = {
       shopDot: $('shopDot'),
@@ -889,6 +903,13 @@
     loadCart();
     bind();
     bindEngagement();
+    // 先用上次缓存的库存立刻画出画面（0 延迟），再去拉最新
+    var bootCache = loadCache();
+    if (bootCache && bootCache.rows && bootCache.rows.length) {
+      state.rows = bootCache.rows.map(normalize);
+      state.at = bootCache.at;
+      state.mode = 'cache';
+    }
     render();
     renderPublicVisits(cachedPublicVisits());
     load(false);
