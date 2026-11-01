@@ -239,6 +239,15 @@
       var cached = localStorage.getItem(CONTACT_KEY);
       if (cached !== null) { renderContact(cached); }
     } catch (e) { }
+
+    // 同源兜底：数据库连不上时（国内常见），用站点里的 contact.json
+    fetch('contact.json?t=' + Math.floor(Date.now() / 600000))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (j && typeof j.contact === 'string' && j.contact) { renderContact(j.contact); }
+      })
+      .catch(function () { });
+
     if (!cfg) { return; }
     fetchContact(cfg).then(function (v) {
       if (v === null) { return; }
