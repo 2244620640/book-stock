@@ -152,6 +152,7 @@
     }
     el.btnAdd.classList.toggle('hidden', name === 'settings' || name === 'logs');
     if (name === 'settings') { fillSettings(); }
+    if (name === 'overview') { refreshVisits(); }
     if (history.replaceState) {
       try { history.replaceState(null, '', '#' + name); } catch (e) { /* file:// 下忽略 */ }
     }
@@ -190,6 +191,84 @@
       el.cloudBadge.textContent = st.badge;
       el.cloudBadge.className = 'badge' + (st.badgeOff ? ' off' : '');
     }
+  }
+
+  /* ================= 访客统计 ================= */
+
+  function smallKpi(label, value, unit) {
+    return '<div class="kpi"><div class="label">' + esc(label) + '</div><div class="value">' +
+      fmtInt(value || 0) + '<small>' + esc(unit) + '</small></div></div>';
+  }
+
+  function renderVisits(d) {
+    var box = el.visitBox;
+    if (!box) { return; }
+    if (!d) {
+      box.innerHTML = '<div class="muted" style="font-size:13px;text-align:center;padding:8px 0">登录云同步后显示访客数据</div>';
+      return;
+    }
+    var s = d.stats || {};
+    var html = '<div class="kpis" style="margin-bottom:14px">' +
+      smallKpi('今日访问', s.visits_today, '次') +
+      smallKpi('今日访客', s.visitors_today, '人') +
+      smallKpi('近 7 天访客', s.visitors_7d, '人') +
+      smallKpi('累计访客', s.visitors_total, '人') +
+      '</div>';
+
+    var days = (d.daily || []).slice(0, 7).slice().reverse();
+    if (days.length) {
+      var max = 1;
+      days.forEach(function (x) { if (Number(x.visits) > max) { max = Number(x.visits); } });
+      html += '<div class="bars" style="margin-bottom:12px">' + days.map(function (x) {
+        var label = String(x.day || '').slice(5);
+        var pct = Math.max(3, Math.round(Number(x.visits) / max * 100));
+        return '<div class="bar-row"><div class="name">' + esc(label) + '</div>' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+          '<div class="num">' + fmtInt(x.visits) + '</div></div>';
+      }).join('') + '</div>';
+    }
+
+    var recent = d.recent || [];
+    html += '<div style="border-top:1px dashed var(--line);padding-top:10px">' +
+      '<div class="muted" style="font-size:12px;margin-bottom:4px">最近访问</div>';
+    if (recent.length) {
+      html += recent.map(function (r) {
+        return '<div class="log" style="grid-template-columns:1fr auto;padding:7px 0;border-bottom:0">' +
+          '<div style="min-width:0"><div class="t" style="font-size:13px">' + esc(r.device || '未知设备') +
+          (r.referrer ? '<span class="muted" style="font-weight:400;font-size:12px"> · 来自 ' + esc(r.referrer) + '</span>' : '') +
+          '</div></div>' +
+          '<div class="when" style="font-size:11.5px;white-space:nowrap">' + esc(S.fmtLocal(r.created_at)) + '</div>' +
+          '</div>';
+      }).join('');
+    } else {
+      html += '<div class="muted" style="font-size:12.5px;text-align:center;padding:10px 0">还没有访问记录</div>';
+    }
+    html += '</div>';
+
+    if (s.last_visit) {
+      html += '<div class="muted" style="font-size:11.5px;margin-top:8px;text-align:right">最近一次访问：' +
+        esc(S.fmtLocal(s.last_visit)) + '</div>';
+    }
+
+    box.innerHTML = html;
+  }
+
+  var visitsBusy = false;
+
+  function refreshVisits() {
+    if (!el.visitBox) { return; }
+    if (!S.session()) { renderVisits(null); return; }
+    if (visitsBusy) { return; }
+    visitsBusy = true;
+    el.visitBox.innerHTML = '<div class="muted" style="font-size:13px;text-align:center;padding:8px 0">正在读取访客数据…</div>';
+    C.loadVisits().then(function (d) {
+      visitsBusy = false;
+      renderVisits(d);
+    }).catch(function (e) {
+      visitsBusy = false;
+      el.visitBox.innerHTML = '<div class="muted" style="font-size:12.5px;text-align:center;padding:8px 0">读取失败：' +
+        esc(e.message || '未知错误') + '</div>';
+    });
   }
 
   /* ================= 概览 ================= */
@@ -1095,6 +1174,7 @@
         if (r.pulledBooks || r.pulledLogs) { bits.push('下载 ' + (r.pulledBooks + r.pulledLogs) + ' 条'); }
         toast(bits.length ? '同步完成 · ' + bits.join('，') : '同步完成，数据已是最新');
       }
+      refreshVisits();
     }).catch(function (e) {
       ui.syncing = false;
       el.btnSync.classList.remove('spin');
@@ -1346,6 +1426,10 @@
       $('btnDiag').addEventListener('click', function () { runNetworkDiag(); });
     }
 
+    if (el.btnVisitRefresh) {
+      el.btnVisitRefresh.addEventListener('click', function () { refreshVisits(); });
+    }
+
     if ($('btnCopyShop')) {      $('btnCopyShop').addEventListener('click', function () {
         copyText(shopUrl()).then(function () { toast('顾客页链接已复制'); })
           .catch(function () { toast('复制失败，请手动选中链接', { type: 'err' }); });
@@ -1518,6 +1602,8 @@
       logList: $('logList'),
       logEmpty: $('logEmpty'),
       btnExportLogs: $('btnExportLogs'),
+      visitBox: $('visitBox'),
+      btnVisitRefresh: $('btnVisitRefresh'),
       cloudBadge: $('cloudBadge'),
       cloudStatus: $('cloudStatus'),
       cloudUrl: $('cloudUrl'),
@@ -1553,6 +1639,7 @@
 
     render();
     fillSettings();
+    refreshVisits();
 
     // 本机还没填过云端配置时，自动读取部署在站点里的 config.json（省得手打地址和密钥）
     if (!S.cloudConfig().url) {
