@@ -15,7 +15,7 @@
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32">
 <link rel="icon" href="icons/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="assets/app.css?v=20261102a">
+<link rel="stylesheet" href="assets/app.css?v=20261102b">
 </head>
 <body>
 
@@ -157,6 +157,21 @@
           <input class="input" id="operatorInput" placeholder="你的名字，例如：张三" maxlength="20">
         </div>
         <button class="btn sm" id="saveOperator">保存</button>
+      </div>
+
+      <div class="settings-card">
+        <h3>采购联系方式 <span class="badge">顾客可见</span></h3>
+        <p class="desc">显示在顾客页底部和选购清单里，告诉客户怎么找你下单。支持多行，留空则不显示。</p>
+        <div class="field">
+          <textarea class="input" id="contactInput" rows="3" maxlength="300" placeholder="例：
+微信：bookstock2026
+电话：138-0000-0000
+（工作日 9:00-18:00 回复）"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary sm" id="saveContact">保存并同步</button>
+          <span class="hint" id="contactHint" style="align-self:center"></span>
+        </div>
       </div>
 
       <div class="settings-card">
@@ -328,8 +343,8 @@
   <div style="padding:40px 20px;text-align:center">本项目需要浏览器开启 JavaScript 才能使用。</div>
 </noscript>
 
-<script src="assets/store.js?v=20261102a"></script>
-<script src="assets/cloud.js?v=20261102a"></script>
-<script src="assets/app.js?v=20261102a"></script>
+<script src="assets/store.js?v=20261102b"></script>
+<script src="assets/cloud.js?v=20261102b"></script>
+<script src="assets/app.js?v=20261102b"></script>
 </body>
 </html>
