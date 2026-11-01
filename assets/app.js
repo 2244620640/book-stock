@@ -421,6 +421,9 @@
     else if (S.isLow(b)) { tags += '<span class="tag warn">低于安全库存</span>'; }
     var shotCount = S.photoList(b).length;
     if (shotCount) { tags += '<span class="tag photo">照片 ' + shotCount + '</span>'; }
+    var noteTags = String(b.tags || '').split(/[,，\s]+/).filter(Boolean);
+    noteTags.slice(0, 3).forEach(function (t) { tags += '<span class="tag mark">' + esc(t) + '</span>'; });
+    if (noteTags.length > 3) { tags += '<span class="tag mark">+' + (noteTags.length - 3) + '</span>'; }
     if (!tags) { tags = '<span class="tag">未分类</span>'; }
     var meta = [b.author, b.publisher, b.isbn].filter(Boolean).join(' · ');
 
@@ -646,6 +649,17 @@
     setTimeout(function () { qtyInput.focus(); qtyInput.select(); }, 60);
   }
 
+  function tagOptions() {
+    var seen = {};
+    var out = [];
+    S.books().forEach(function (b) {
+      String(b.tags || '').split(/[,，\s]+/).forEach(function (t) {
+        if (t && !seen[t]) { seen[t] = 1; out.push(t); }
+      });
+    });
+    return out.slice(0, 60).map(function (t) { return '<option value="' + esc(t) + '">'; }).join('');
+  }
+
   function openBookForm(id) {
     var book = id ? S.find(id) : null;
     var b = book || {};
@@ -680,6 +694,12 @@
         fieldHTML({ label: '单位', control: inputHTML('f_unit', { value: b.unit || '册', maxlength: 4 }) }) +
       '</div>' +
       fieldHTML({ label: '备注', control: '<textarea class="input" id="f_note" rows="2" maxlength="120" placeholder="可选">' + esc(b.note || '') + '</textarea>' }) +
+      fieldHTML({
+        label: '备注标签',
+        control: inputHTML('f_tags', { value: b.tags || '', placeholder: '如：签名版, 绝版, 轻微瑕疵', maxlength: 60, list: 'tagList' }) +
+          '<datalist id="tagList">' + tagOptions() + '</datalist>',
+        hint: '逗号或空格分隔，商品卡片和顾客页都会显示'
+      }) +
       '<div class="field">' +
         '<label>商品照片<span class="hint" style="display:inline;margin-left:6px">想传几张就几张，第一张自动当封面</span></label>' +
         '<div class="photo-manager">' +
@@ -717,6 +737,7 @@
         minQty: $('f_minQty').value,
         unit: $('f_unit').value.trim() || '册',
         note: $('f_note').value.trim(),
+        tags: $('f_tags').value.trim(),
         cover: formPhotos[0] || '',
         back: formPhotos[1] || '',
         photos: formPhotos.join('\n')
@@ -749,7 +770,7 @@
       ['作者', b.author], ['出版社', b.publisher], ['ISBN', b.isbn],
       ['分类', b.category], ['货位', b.location], ['单价', b.price ? moneyFull(b.price) : ''],
       ['库存', fmtInt(b.qty) + ' ' + (b.unit || '册')], ['安全库存', b.minQty || ''],
-      ['库存码洋', moneyFull(b.qty * b.price)], ['备注', b.note],
+      ['库存码洋', moneyFull(b.qty * b.price)], ['备注', b.note], ['标签', b.tags],
       ['更新时间', S.fmtLocal(b.updatedAt)]
     ].filter(function (r) { return r[1] !== '' && r[1] != null; });
 
@@ -909,6 +930,7 @@
     var unit = el.batchUnit.value.trim() || '册';
     var mode = el.batchGroupMode ? el.batchGroupMode.value : 'gap';
     var gapSec = Math.max(5, parseInt(el.batchGap ? el.batchGap.value : 30, 10) || 30);
+    if (mode === 'allset') { unit = '套'; }   // 「全部算一套」自动把单位改成 套
     var batchDir = prefix + '/' + ymd(new Date()).replace(/-/g, '') + '-' + Date.now().toString(36).slice(-4);
 
     var total = list.length;
@@ -1447,7 +1469,7 @@
           return {
             id: b.id, title: b.title, author: b.author, isbn: b.isbn, category: b.category,
             publisher: b.publisher, price: b.price, qty: b.qty,
-            unit: b.unit, cover: b.cover, back: b.back, updated_at: b.updatedAt
+            unit: b.unit, cover: b.cover, back: b.back, tags: b.tags || '', updated_at: b.updatedAt
           };
         });
         download('catalog.json', JSON.stringify(rows, null, 2), 'application/json');
