@@ -123,17 +123,22 @@
 
   function signIn(email, password) {
     if (!isConfigured()) { return Promise.reject(new Error('请先填写云端地址与 anon key')); }
-    return signInOnce(email, password).catch(function (err) {
-      if (err.message !== 'NETWORK') { throw err; }
-      // 超时/被拦：等 2.5 秒自动重试一次
-      return new Promise(function (resolve) { global.setTimeout(resolve, 2500); })
-        .then(function () { return signInOnce(email, password); });
-    }).catch(function (err) {
-      if (err.message === 'NETWORK') {
-        throw new Error('连不上登录服务：可能是尝试太频繁被临时限制，等 1~2 分钟再试');
-      }
-      throw err;
-    });
+    var attempt = 0;
+    function run() {
+      return signInOnce(email, password).catch(function (err) {
+        if (err.message === 'NETWORK' && attempt < 2) {
+          attempt++;
+          return new Promise(function (resolve) {
+            global.setTimeout(resolve, 1200 + attempt * 1300);
+          }).then(run);
+        }
+        if (err.message === 'NETWORK') {
+          throw new Error('连不上登录服务：可能是网络抖动或被临时限制，等 1~2 分钟再试');
+        }
+        throw err;
+      });
+    }
+    return run();
   }
 
   function signUp(email, password) {
