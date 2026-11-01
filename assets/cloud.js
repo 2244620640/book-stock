@@ -362,6 +362,35 @@
     });
   }
 
+  /* ---------------- 店铺设置（联系方式等） ---------------- */
+
+  function getSetting(key) {
+    var c = config();
+    if (!c.url) { return Promise.resolve(''); }
+    return fetch(c.url + '/rest/v1/site_settings?select=value&key=eq.' + encodeURIComponent(key), {
+      headers: { apikey: c.key, Accept: 'application/json' }
+    }).then(function (r) {
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
+      return r.json();
+    }).then(function (rows) {
+      return (rows && rows[0] && rows[0].value) || '';
+    });
+  }
+
+  function saveSetting(key, value) {
+    var c = config();
+    return ensureSession().then(function () {
+      return rawRequest('/rest/v1/site_settings?on_conflict=key', {
+        method: 'POST',
+        headers: withAuth({
+          'Content-Type': 'application/json',
+          Prefer: 'resolution=merge-duplicates,return=minimal'
+        }),
+        body: JSON.stringify([{ key: key, value: value, updated_at: new Date().toISOString() }])
+      });
+    });
+  }
+
   global.Cloud = {
     config: config,
     isConfigured: isConfigured,
@@ -373,6 +402,8 @@
     ensureSession: ensureSession,
     sync: sync,
     loadVisits: loadVisits,
+    getSetting: getSetting,
+    saveSetting: saveSetting,
     testConnection: testConnection,
     busy: function () { return CLOUD.busy; },
     lastError: function () { return CLOUD.lastError; }
