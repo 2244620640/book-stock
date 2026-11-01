@@ -183,6 +183,7 @@
       min_qty: b.minQty,
       unit: b.unit,
       note: b.note,
+      tags: b.tags || '',
       cover: b.cover || '',
       back: b.back || '',
       photos: b.photos || '',
