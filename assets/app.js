@@ -233,10 +233,13 @@
       '<div class="muted" style="font-size:12px;margin-bottom:4px">最近访问</div>';
     if (recent.length) {
       html += recent.map(function (r) {
-        return '<div class="log" style="grid-template-columns:1fr auto;padding:7px 0;border-bottom:0">' +
-          '<div style="min-width:0"><div class="t" style="font-size:13px">' + esc(r.device || '未知设备') +
-          (r.referrer ? '<span class="muted" style="font-weight:400;font-size:12px"> · 来自 ' + esc(r.referrer) + '</span>' : '') +
-          '</div></div>' +
+        return '<div class="log" style="grid-template-columns:1fr auto;padding:8px 0;border-bottom:0">' +
+          '<div style="min-width:0">' +
+            '<div class="t" style="font-size:13px">' + esc(r.device || '未知设备') +
+              '<span class="muted" style="font-weight:400;font-size:11.5px"> · ' + esc(r.ip || 'IP 未知') + '</span>' +
+            '</div>' +
+            (r.referrer ? '<div class="s">来自 ' + esc(r.referrer) + '</div>' : '') +
+          '</div>' +
           '<div class="when" style="font-size:11.5px;white-space:nowrap">' + esc(S.fmtLocal(r.created_at)) + '</div>' +
           '</div>';
       }).join('');
