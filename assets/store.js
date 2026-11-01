@@ -77,6 +77,7 @@
       cover: str(raw.cover || raw.cover_url),
       back: str(raw.back || raw.back_url),
       photos: str(raw.photos || raw.gallery),
+      soldOutAt: toISO(raw.soldOutAt || raw.sold_out_at) || '',
       deleted: !!raw.deleted,
       updatedBy: str(raw.updatedBy || raw.updated_by),
       createdAt: toISO(raw.createdAt || raw.created_at) || nowISO(),
@@ -339,6 +340,12 @@
     b.dirty = true;
   }
 
+  // 库存归零时记下"售出时间"，补货后清掉
+  function syncSoldOut(b, beforeQty) {
+    if (b.qty > 0) { b.soldOutAt = ''; return; }
+    if (beforeQty > 0 && b.qty === 0) { b.soldOutAt = nowISO(); }
+  }
+
   function addLog(entry) {
     var log = normalizeLog(entry);
     log.createdAt = toISO(entry.createdAt) || nowISO();
@@ -393,6 +400,7 @@
     }
     if (!b.title) { b.title = before.title; }
     b.updatedBy = opt.operator || state.settings.operator;
+    syncSoldOut(b, before.qty);
     touch(b);
     if (before.qty !== b.qty) {
       addLog({
@@ -448,6 +456,7 @@
     var before = b.qty;
     b.qty = next;
     b.updatedBy = opt.operator || state.settings.operator;
+    syncSoldOut(b, before);
     touch(b);
     var log = addLog({
       bookId: b.id, title: b.title, type: real > 0 ? 'in' : 'out', qty: real,
@@ -467,6 +476,7 @@
     if (next === before) { return { book: b, applied: 0 }; }
     b.qty = next;
     b.updatedBy = opt.operator || state.settings.operator;
+    syncSoldOut(b, before);
     touch(b);
     addLog({
       bookId: b.id, title: b.title, type: 'adjust', qty: next - before,
