@@ -175,6 +175,7 @@
       unit: String(r.unit || '册'),
       cover: String(r.cover || ''),
       back: String(r.back || ''),
+      photos: String(r.photos || ''),
       soldAt: String(r.sold_out_at || ''),
       location: String(r.location || ''),
       tags: String(r.tags || '')
@@ -471,7 +472,7 @@
     var b = null;
     state.rows.forEach(function (r) { if (r.id === id) { b = r; } });
     if (!b) { return; }
-    var imgs = photosAll(b).slice(0, 12);
+    var imgs = photosAll(b);
     var soldOut = !inStock(b);
     var tags = String(b.tags || '').split(/[,，\s]+/).filter(Boolean);
 
@@ -481,11 +482,16 @@
       '<button class="modal-close" data-detail-close type="button" aria-label="关闭">×</button>' +
       '</div>';
 
-    html += imgs.length
-      ? '<div class="detail-gallery">' + imgs.map(function (src) {
-        return '<figure class="dg-item"><img src="' + esc(src) + '" alt="" loading="lazy"></figure>';
-      }).join('') + '</div>'
-      : '<div class="detail-gallery empty-g">暂无图片</div>';
+    if (imgs.length) {
+      html += '<div class="dg-wrap">' +
+        '<div class="dg-track" id="dgTrack">' + imgs.map(function (src) {
+          return '<div class="dg-slide"><img src="' + esc(src) + '" alt="" loading="lazy"></div>';
+        }).join('') + '</div>' +
+        (imgs.length > 1 ? '<span class="dg-counter" id="dgCounter">1 / ' + imgs.length + '</span>' : '') +
+        '</div>';
+    } else {
+      html += '<div class="dg-empty">暂无图片</div>';
+    }
 
     html += '<div class="detail-rows">' +
       '<div><span>价格</span><b>' + (b.price ? money(b.price) : '价格面议') + '</b></div>' +
@@ -511,6 +517,16 @@
     el.detailBody.innerHTML = html;
     el.detailDrawer.hidden = false;
     document.body.style.overflow = 'hidden';
+
+    // 左右滑动切换图片，右下角显示 1/3
+    var track = el.detailBody.querySelector('#dgTrack');
+    var counter = el.detailBody.querySelector('#dgCounter');
+    if (track && counter) {
+      track.addEventListener('scroll', function () {
+        var idx = Math.round(track.scrollLeft / Math.max(1, track.clientWidth)) + 1;
+        counter.textContent = Math.min(idx, imgs.length) + ' / ' + imgs.length;
+      }, { passive: true });
+    }
   }
 
   function closeDetail() {
@@ -545,7 +561,7 @@
 
     document.addEventListener('click', function (e) {
       // 详情里点图片 → 全屏看大图
-      var gimg = e.target.closest('.detail-gallery img');
+      var gimg = e.target.closest('.dg-slide img');
       if (gimg) {
         e.preventDefault();
         if (!el.imgView.hidden) { el.imgView.hidden = true; return; }
