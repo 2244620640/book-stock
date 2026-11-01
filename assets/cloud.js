@@ -103,8 +103,7 @@
     });
   }
 
-  function signIn(email, password) {
-    if (!isConfigured()) { return Promise.reject(new Error('请先填写云端地址与 anon key')); }
+  function signInOnce(email, password) {
     return rawRequest('/auth/v1/token?grant_type=password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -114,10 +113,25 @@
       saveAuth(data, email);
       return Store.session();
     }, function (err) {
-      if (err.network) { throw new Error('连不上登录服务：网络超时或被拦截（不是密码问题）'); }
+      if (err.network) { throw new Error('NETWORK'); }
       if (err.status === 400) { throw new Error('邮箱或密码不正确'); }
       if (err.status === 422) { throw new Error('邮箱格式不对，或账号不存在'); }
-      if (err.status === 429) { throw new Error('尝试太频繁，等 1 分钟再试'); }
+      if (err.status === 429) { throw new Error('尝试太频繁，等 1~2 分钟再试'); }
+      throw err;
+    });
+  }
+
+  function signIn(email, password) {
+    if (!isConfigured()) { return Promise.reject(new Error('请先填写云端地址与 anon key')); }
+    return signInOnce(email, password).catch(function (err) {
+      if (err.message !== 'NETWORK') { throw err; }
+      // 超时/被拦：等 2.5 秒自动重试一次
+      return new Promise(function (resolve) { global.setTimeout(resolve, 2500); })
+        .then(function () { return signInOnce(email, password); });
+    }).catch(function (err) {
+      if (err.message === 'NETWORK') {
+        throw new Error('连不上登录服务：可能是尝试太频繁被临时限制，等 1~2 分钟再试');
+      }
       throw err;
     });
   }
