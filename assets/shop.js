@@ -174,7 +174,8 @@
       minQty: Number(r.min_qty || r.minQty) || 0,
       unit: String(r.unit || '册'),
       cover: String(r.cover || ''),
-      location: String(r.location || '')
+      location: String(r.location || ''),
+      tags: String(r.tags || '')
     };
   }
 
@@ -264,6 +265,7 @@
       ? '<img src="' + esc(b.cover) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
       : '';
     var soldOut = !inStock(b);
+    var noteTags = String(b.tags || '').split(/[,，\s]+/).filter(Boolean).slice(0, 3);
     return '<article class="shop-card' + (soldOut ? ' sold-out' : '') + '" data-id="' + esc(b.id) + '">' +
       '<div class="shop-cover">' + cover +
         (cover ? '' : '<div class="ph">暂无图片</div>') +
@@ -274,6 +276,11 @@
       '<div class="shop-info">' +
         '<div class="shop-title">' + esc(b.title) + '</div>' +
         '<div class="shop-meta">' + esc([b.category, b.author].filter(Boolean).join(' · ') || '—') + '</div>' +
+        (noteTags.length
+          ? '<div class="shop-tags">' + noteTags.map(function (t) {
+            return '<span class="shop-tag">' + esc(t) + '</span>';
+          }).join('') + '</div>'
+          : '') +
         '<div class="shop-price-row">' +
           '<span class="shop-price' + (b.price ? '' : ' free') + '">' + (b.price ? money(b.price) : '价格面议') + '</span>' +
         '</div>' +
