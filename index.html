@@ -15,7 +15,7 @@
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32">
 <link rel="icon" href="icons/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="assets/app.css?v=20261101m">
+<link rel="stylesheet" href="assets/app.css?v=20261101n">
 </head>
 <body>
 
@@ -229,7 +229,7 @@
 
       <div class="settings-card">
         <h3>批量上架照片 <span class="badge">自动</span></h3>
-        <p class="desc">选一批照片，自动压缩 → 上传 → 按「一本两张」生成记录 → 同步上架。需要先登录云同步。</p>
+        <p class="desc">选一批照片，自动压缩 → 上传 → 分组生成记录 → 同步上架。<b>一本可以有任意多张照片。</b></p>
         <div class="field-row">
           <div class="field">
             <label>批次名（图片目录）</label>
@@ -250,12 +250,27 @@
             <input class="input" id="batchUnit" value="册" maxlength="4">
           </div>
         </div>
+        <div class="field-row">
+          <div class="field">
+            <label>怎么分成一本一本</label>
+            <select class="select" id="batchGroupMode" style="width:100%">
+              <option value="gap">按拍摄间隔（推荐）</option>
+              <option value="pair">每 2 张一本</option>
+              <option value="each">每张一本</option>
+              <option value="all">全部算一本</option>
+            </select>
+          </div>
+          <div class="field" id="gapField">
+            <label>间隔（秒）</label>
+            <input class="input" id="batchGap" type="number" value="30" min="5" max="600" step="5">
+          </div>
+        </div>
         <button class="btn primary block" id="btnBatchImport" type="button">选择照片并导入</button>
         <div class="btn-row" style="margin-top:8px">
           <button class="btn sm" id="btnCameraImport" type="button">📷 拍一张直接上传</button>
         </div>
         <div class="hint" style="margin-top:8px">
-          按拍摄时间排序，<b>每 2 张合成一本</b>（第 1 张封面、第 2 张封底）；单张也行。一次最多 200 张。
+          按拍摄时间排序，相邻两张间隔超过设定秒数就算换了一本；每本第 1 张当封面、第 2 张当封底，其余进「整套照片」。单张也能导入。
         </div>
         <input type="file" id="filePhotos" accept="image/*" multiple hidden>
         <input type="file" id="fileCamera" accept="image/*" capture="environment" hidden>
@@ -312,8 +327,8 @@
   <div style="padding:40px 20px;text-align:center">本项目需要浏览器开启 JavaScript 才能使用。</div>
 </noscript>
 
-<script src="assets/store.js?v=20261101m"></script>
-<script src="assets/cloud.js?v=20261101m"></script>
-<script src="assets/app.js?v=20261101m"></script>
+<script src="assets/store.js?v=20261101n"></script>
+<script src="assets/cloud.js?v=20261101n"></script>
+<script src="assets/app.js?v=20261101n"></script>
 </body>
 </html>
