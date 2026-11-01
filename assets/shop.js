@@ -74,6 +74,36 @@
 
   /* ---------------- 数据 ---------------- */
 
+  function trackVisit(cfg) {
+    try {
+      var LAST = 'bookstock.visit.at';
+      var last = parseInt(localStorage.getItem(LAST) || '0', 10);
+      if (Date.now() - last < 30 * 60 * 1000) { return; }   // 同一浏览器 30 分钟内只记一次
+      var vid = localStorage.getItem('bookstock.visitor');
+      if (!vid) {
+        vid = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem('bookstock.visitor', vid);
+      }
+      var ref = '';
+      try {
+        ref = String(document.referrer || '').replace(/^https?:\/\//i, '').split('/')[0].slice(0, 80);
+      } catch (e) { }
+      var dev = (window.innerWidth < 768) ? '手机' : '电脑';
+      fetch(cfg.url + '/rest/v1/visits', {
+        method: 'POST',
+        headers: {
+          apikey: cfg.key,
+          Authorization: 'Bearer ' + cfg.key,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify([{ visitor_id: vid, path: 'shop', referrer: ref, device: dev }])
+      }).then(function (r) {
+        if (r.ok) { localStorage.setItem(LAST, String(Date.now())); }
+      }).catch(function () { /* 统计失败不影响浏览 */ });
+    } catch (e) { /* 忽略 */ }
+  }
+
   function readConfig() {
     return fetch('config.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : {}; })
@@ -425,6 +455,7 @@
 
     return readConfig().then(function (cfg) {
       if (!cfg) { return fetchStatic(); }
+      trackVisit(cfg);
       // 优先实时数据；连不上就退回站点里的静态快照（换网络/被墙时也能看到东西）
       return fetchCatalog(cfg).catch(function (e) {
         // 记下真实原因，方便排查（页面上不显示技术细节）
