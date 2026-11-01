@@ -196,13 +196,25 @@
 
   /* ---------------- 渲染 ---------------- */
 
+  function inStock(b) { return b.qty > 0; }
+
+  // 有货的排前面（按书名），已售完的统一排到最后
+  function sortedRows() {
+    return state.rows.slice().sort(function (a, b) {
+      var sa = inStock(a) ? 0 : 1;
+      var sb = inStock(b) ? 0 : 1;
+      if (sa !== sb) { return sa - sb; }
+      return String(a.title || '').localeCompare(String(b.title || ''), 'zh-Hans-CN');
+    });
+  }
+
   function available() {
-    return state.rows.filter(function (b) { return b.qty > 0; });
+    return state.rows.filter(inStock);
   }
 
   function visibleRows() {
     var q = state.q.toLowerCase();
-    return available().filter(function (b) {
+    return sortedRows().filter(function (b) {
       if (state.cat && b.category !== state.cat) { return false; }
       if (inCart(b.id)) { return false; }          // 已加入选购的，从列表里隐藏
       if (!q) { return true; }
@@ -213,12 +225,15 @@
   function renderStatus() {
     var text = '';
     var dot = '';
+    var onSale = available().length;
+    var soldOut = state.rows.length - onSale;
+    var suffix = soldOut ? ' · 已售完 ' + soldOut + ' 种' : '';
     if (state.mode === 'cloud') {
       dot = 'on';
-      text = '共 ' + available().length + ' 种在售 · 实时库存';
+      text = '共 ' + onSale + ' 种在售' + suffix + ' · 实时库存';
     } else if (state.mode === 'static') {
       dot = state.degraded ? 'err' : '';
-      text = '共 ' + available().length + ' 种在售 · 静态快照 ' + fmtTime(state.at) +
+      text = '共 ' + onSale + ' 种在售' + suffix + ' · 静态快照 ' + fmtTime(state.at) +
         (state.degraded ? ' · ' + state.degraded : '');
     } else if (state.mode === 'cache') {
       dot = 'err';
@@ -230,13 +245,13 @@
 
   function renderCats() {
     var counts = {};
-    available().forEach(function (b) {
+    state.rows.forEach(function (b) {
       var c = b.category || '未分类';
       counts[c] = (counts[c] || 0) + 1;
     });
     var names = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
     if (names.length <= 1) { el.shopCats.innerHTML = ''; return; }
-    var html = ['<button class="chip' + (state.cat === '' ? ' active' : '') + '" data-cat="">全部<span class="count">' + available().length + '</span></button>'];
+    var html = ['<button class="chip' + (state.cat === '' ? ' active' : '') + '" data-cat="">全部<span class="count">' + state.rows.length + '</span></button>'];
     names.forEach(function (n) {
       html.push('<button class="chip' + (state.cat === n ? ' active' : '') + '" data-cat="' + esc(n) + '">' +
         esc(n) + '<span class="count">' + counts[n] + '</span></button>');
@@ -248,10 +263,13 @@
     var cover = b.cover
       ? '<img src="' + esc(b.cover) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
       : '';
-    return '<article class="shop-card" data-id="' + esc(b.id) + '">' +
+    var soldOut = !inStock(b);
+    return '<article class="shop-card' + (soldOut ? ' sold-out' : '') + '" data-id="' + esc(b.id) + '">' +
       '<div class="shop-cover">' + cover +
         (cover ? '' : '<div class="ph">暂无图片</div>') +
-        '<span class="stock-tag">库存 ' + b.qty + ' ' + esc(b.unit) + '</span>' +
+        '<span class="stock-tag' + (soldOut ? ' out' : '') + '">' +
+          (soldOut ? '已售完' : '库存 ' + b.qty + ' ' + esc(b.unit)) +
+        '</span>' +
       '</div>' +
       '<div class="shop-info">' +
         '<div class="shop-title">' + esc(b.title) + '</div>' +
@@ -259,7 +277,9 @@
         '<div class="shop-price-row">' +
           '<span class="shop-price' + (b.price ? '' : ' free') + '">' + (b.price ? money(b.price) : '价格面议') + '</span>' +
         '</div>' +
-        '<button class="btn sm primary" data-add="' + esc(b.id) + '" type="button">加入选购</button>' +
+        (soldOut
+          ? '<button class="btn sm" type="button" disabled>已售完</button>'
+          : '<button class="btn sm primary" data-add="' + esc(b.id) + '" type="button">加入选购</button>') +
       '</div>' +
     '</article>';
   }
@@ -270,8 +290,9 @@
     var list = visibleRows();
     el.shopGrid.innerHTML = list.map(cardHTML).join('');
 
-    var avail = available().length;
+    var onSale = available().length;
     var all = state.rows.length;
+    var soldOutCount = all - onSale;
 
     if (all === 0) {
       el.shopEmpty.innerHTML = '<div class="empty"><div class="glyph">' +
@@ -285,9 +306,11 @@
       el.shopEmpty.innerHTML = '';
     }
 
-    el.shopCount.textContent = avail
-      ? '共 ' + avail + ' 种在售 · 已选 ' + state.cart.length + ' 种'
-      : '';
+    el.shopCount.textContent = onSale
+      ? '共 ' + onSale + ' 种在售' +
+        (soldOutCount ? ' · ' + soldOutCount + ' 种已售完排在最后' : '') +
+        ' · 已选 ' + state.cart.length + ' 种'
+      : (all ? '全部 ' + all + ' 种都已售完' : '');
 
     renderCart();
   }
@@ -336,6 +359,7 @@
     var b = null;
     state.rows.forEach(function (r) { if (r.id === id) { b = r; } });
     if (!b) { return; }
+    if (!inStock(b)) { toast('这本已经售完了', 'err'); return; }
     if (inCart(id)) { return; }
     state.cart.push({
       id: b.id, title: b.title, price: b.price, unit: b.unit,
