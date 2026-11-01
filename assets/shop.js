@@ -544,6 +544,20 @@
     });
 
     document.addEventListener('click', function (e) {
+      // 详情里点图片 → 全屏看大图
+      var gimg = e.target.closest('.detail-gallery img');
+      if (gimg) {
+        e.preventDefault();
+        if (!el.imgView.hidden) { el.imgView.hidden = true; return; }
+        el.imgViewImg.src = gimg.getAttribute('src');
+        el.imgView.hidden = false;
+        return;
+      }
+      if (!el.imgView.hidden && (e.target === el.imgView || e.target === el.imgViewImg)) {
+        el.imgView.hidden = true;
+        return;
+      }
+
       if (e.target.closest('[data-detail-close]')) { closeDetail(); return; }
 
       var dAdd = e.target.closest('[data-detail-add]');
@@ -579,7 +593,8 @@
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
-        if (!el.detailDrawer.hidden) { closeDetail(); }
+        if (!el.imgView.hidden) { el.imgView.hidden = true; }
+        else if (!el.detailDrawer.hidden) { closeDetail(); }
         else if (!el.cartDrawer.hidden) { closeDrawer(); }
       }
     });
@@ -676,6 +691,8 @@
       cartDrawer: $('cartDrawer'),
       detailDrawer: $('detailDrawer'),
       detailBody: $('detailBody'),
+      imgView: $('imgView'),
+      imgViewImg: $('imgViewImg'),
       cartClose: $('cartClose'),
       cartList: $('cartList'),
       cartSummary: $('cartSummary'),
