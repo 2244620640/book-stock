@@ -2,17 +2,17 @@
  * 仓储图书库存 · Service Worker
  * 策略：同源资源 stale-while-revalidate，保证弱网/断网也能打开；跨域请求（云端同步）直接放行不缓存。
  */
-var CACHE = 'bookstock-v16';
+var CACHE = 'bookstock-v17';
 var ASSETS = [
   './index.html',
   './shop.html',
   './manifest.webmanifest',
-  './assets/app.css?v=20261101q',
-  './assets/shop.css?v=20261101q',
-  './assets/store.js?v=20261101q',
-  './assets/cloud.js?v=20261101q',
-  './assets/app.js?v=20261101q',
-  './assets/shop.js?v=20261101q',
+  './assets/app.css?v=20261101r',
+  './assets/shop.css?v=20261101r',
+  './assets/store.js?v=20261101r',
+  './assets/cloud.js?v=20261101r',
+  './assets/app.js?v=20261101r',
+  './assets/shop.js?v=20261101r',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png'
