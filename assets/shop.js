@@ -175,6 +175,7 @@
       unit: String(r.unit || '册'),
       cover: String(r.cover || ''),
       back: String(r.back || ''),
+      soldAt: String(r.sold_out_at || ''),
       location: String(r.location || ''),
       tags: String(r.tags || '')
     };
@@ -201,7 +202,7 @@
   function inStock(b) { return b.qty > 0; }
 
   // 卡片上展示的图片：最多 3 张（cover → back → 其余），至少尽量给 2 张
-  function photosOf(b) {
+  function photosAll(b) {
     var list = [];
     if (b.photos) {
       list = String(b.photos).split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
@@ -213,9 +214,21 @@
     var seen = {};
     var out = [];
     list.forEach(function (s) {
-      if (s && !seen[s] && out.length < 3) { seen[s] = 1; out.push(s); }
+      if (s && !seen[s]) { seen[s] = 1; out.push(s); }
     });
     return out;
+  }
+
+  function photosOf(b) {
+    return photosAll(b).slice(0, 3);
+  }
+
+  function fmtDateTime(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) { return ''; }
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes());
   }
 
   // 有货的排前面（按书名），已售完的统一排到最后
@@ -301,7 +314,7 @@
       '</div>';
     }
 
-    return '<article class="shop-card' + (soldOut ? ' sold-out' : '') + '" data-id="' + esc(b.id) + '">' +
+    return '<article class="shop-card' + (soldOut ? ' sold-out' : '') + '" data-id="' + esc(b.id) + '" data-open="' + esc(b.id) + '">' +
       '<div class="shop-cover' + (imgs.length > 1 ? ' multi' : '') + '">' + coverHTML +
         '<span class="stock-tag' + (soldOut ? ' out' : '') + '">' +
           (soldOut ? '已售完' : '库存 ' + b.qty + ' ' + esc(b.unit)) +
@@ -454,6 +467,58 @@
     });
   }
 
+  function openDetail(id) {
+    var b = null;
+    state.rows.forEach(function (r) { if (r.id === id) { b = r; } });
+    if (!b) { return; }
+    var imgs = photosAll(b).slice(0, 12);
+    var soldOut = !inStock(b);
+    var tags = String(b.tags || '').split(/[,，\s]+/).filter(Boolean);
+
+    var html = '<div class="modal-head">' +
+      '<div style="min-width:0"><h3>' + esc(b.title) + '</h3>' +
+      '<p>' + esc([b.category, b.author].filter(Boolean).join(' · ') || '—') + '</p></div>' +
+      '<button class="modal-close" data-detail-close type="button" aria-label="关闭">×</button>' +
+      '</div>';
+
+    html += imgs.length
+      ? '<div class="detail-gallery">' + imgs.map(function (src) {
+        return '<figure class="dg-item"><img src="' + esc(src) + '" alt="" loading="lazy"></figure>';
+      }).join('') + '</div>'
+      : '<div class="detail-gallery empty-g">暂无图片</div>';
+
+    html += '<div class="detail-rows">' +
+      '<div><span>价格</span><b>' + (b.price ? money(b.price) : '价格面议') + '</b></div>' +
+      '<div><span>状态</span><b class="' + (soldOut ? 'st-out' : 'st-ok') + '">' +
+      (soldOut ? '已售完' : '有货 · 剩 ' + b.qty + ' ' + esc(b.unit)) + '</b></div>' +
+      (soldOut && b.soldAt
+        ? '<div><span>售出时间</span><b>' + esc(fmtDateTime(b.soldAt)) + '</b></div>'
+        : '') +
+      (tags.length
+        ? '<div><span>标签</span><b class="detail-tags">' + tags.map(function (t) {
+          return '<span class="shop-tag">' + esc(t) + '</span>';
+        }).join('') + '</b></div>'
+        : '') +
+      '</div>';
+
+    html += '<div class="modal-foot">' +
+      (soldOut
+        ? '<button class="btn" type="button" disabled>已售完，暂时无法选择</button>'
+        : '<button class="btn primary" type="button" data-detail-add="' + esc(b.id) + '">加入选购</button>') +
+      '<button class="btn" type="button" data-detail-close>关闭</button>' +
+      '</div>';
+
+    el.detailBody.innerHTML = html;
+    el.detailDrawer.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetail() {
+    el.detailDrawer.hidden = true;
+    el.detailBody.innerHTML = '';
+    if (el.cartDrawer.hidden) { document.body.style.overflow = ''; }
+  }
+
   function openDrawer() {
     el.cartDrawer.hidden = false;
     document.body.style.overflow = 'hidden';
@@ -479,14 +544,31 @@
     });
 
     document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-detail-close]')) { closeDetail(); return; }
+
+      var dAdd = e.target.closest('[data-detail-add]');
+      if (dAdd) {
+        var did = dAdd.getAttribute('data-detail-add');
+        closeDetail();
+        addToCart(did);
+        return;
+      }
+
       var add = e.target.closest('[data-add]');
       if (add) { addToCart(add.getAttribute('data-add')); return; }
+
+      var open = e.target.closest('[data-open]');
+      if (open) { openDetail(open.getAttribute('data-open')); return; }
 
       var rm = e.target.closest('[data-remove]');
       if (rm) { removeFromCart(rm.getAttribute('data-remove')); return; }
 
       var cat = e.target.closest('[data-cat]');
       if (cat) { state.cat = cat.getAttribute('data-cat'); render(); return; }
+    });
+
+    el.detailDrawer.addEventListener('click', function (e) {
+      if (e.target === el.detailDrawer) { closeDetail(); }
     });
 
     el.btnCart.addEventListener('click', openDrawer);
@@ -496,7 +578,10 @@
       if (e.target === el.cartDrawer) { closeDrawer(); }
     });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !el.cartDrawer.hidden) { closeDrawer(); }
+      if (e.key === 'Escape') {
+        if (!el.detailDrawer.hidden) { closeDetail(); }
+        else if (!el.cartDrawer.hidden) { closeDrawer(); }
+      }
     });
 
     el.btnClearCart.addEventListener('click', function () {
@@ -589,6 +674,8 @@
       cartFab: $('cartFab'),
       cartFabText: $('cartFabText'),
       cartDrawer: $('cartDrawer'),
+      detailDrawer: $('detailDrawer'),
+      detailBody: $('detailBody'),
       cartClose: $('cartClose'),
       cartList: $('cartList'),
       cartSummary: $('cartSummary'),
