@@ -680,13 +680,16 @@
         fieldHTML({ label: '单位', control: inputHTML('f_unit', { value: b.unit || '册', maxlength: 4 }) }) +
       '</div>' +
       fieldHTML({ label: '备注', control: '<textarea class="input" id="f_note" rows="2" maxlength="120" placeholder="可选">' + esc(b.note || '') + '</textarea>' }) +
-      imageFieldHTML('cover', '封面照片（正面）', b.cover || '') +
-      imageFieldHTML('back', '封底照片（背面）', b.back || '') +
-      fieldHTML({
-        label: '整套照片（可选）',
-        control: '<textarea class="input" id="f_photos" rows="3" spellcheck="false" placeholder="每行一个图片路径或网址，例如 assets/covers/shaonian/001.jpg">' + esc(b.photos || '') + '</textarea>',
-        hint: '一行一张，按顺序展示。手机端可以留空，改用上面的「选择图片」'
-      }) +
+      '<div class="field">' +
+        '<label>商品照片<span class="hint" style="display:inline;margin-left:6px">想传几张就几张，第一张自动当封面</span></label>' +
+        '<div class="photo-manager">' +
+          '<div class="photo-thumbs" id="photoThumbs"></div>' +
+          '<div class="btn-row" style="margin-top:8px">' +
+            '<button type="button" class="btn sm" id="btnAddPhoto">＋ 添加照片</button>' +
+            '<span class="hint" id="photoHint" style="align-self:center"></span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
       '<div class="modal-foot">' +
         (book ? '<button class="btn danger" data-act="del" data-id="' + esc(book.id) + '" type="button" style="flex:0 0 auto">删除</button>' : '') +
         '<button class="btn" data-close type="button">取消</button>' +
@@ -694,17 +697,12 @@
       '</div>'
     );
 
-    wireImagePickers();
+    initPhotoManager(book);
 
     setTimeout(function () {
       var t = $('f_title');
       if (!book && t) { t.focus(); }
     }, 60);
-
-    function pickerValue(key) {
-      var box = el.modal.querySelector('.img-picker[data-key="' + key + '"]');
-      return box ? (box.getAttribute('data-value') || '') : '';
-    }
 
     $('bookSubmit').addEventListener('click', function () {
       var data = {
@@ -719,9 +717,9 @@
         minQty: $('f_minQty').value,
         unit: $('f_unit').value.trim() || '册',
         note: $('f_note').value.trim(),
-        cover: pickerValue('cover'),
-        back: pickerValue('back'),
-        photos: $('f_photos').value.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean).join('\n')
+        cover: formPhotos[0] || '',
+        back: formPhotos[1] || '',
+        photos: formPhotos.join('\n')
       };
       if (!data.title) {
         toast('请填写书名', { type: 'err' });
@@ -1008,119 +1006,116 @@
     );
   }
 
-  function fileToDataURL(file, maxSide, quality) {
+  var formPhotos = [];
+
+  function blobToDataURL(blob) {
     return new Promise(function (resolve, reject) {
-      var img = new Image();
-      var url = URL.createObjectURL(file);
-      img.onload = function () {
-        try {
-          var w = img.width, h = img.height;
-          var scale = Math.min(1, maxSide / Math.max(w, h));
-          var canvas = document.createElement('canvas');
-          canvas.width = Math.max(1, Math.round(w * scale));
-          canvas.height = Math.max(1, Math.round(h * scale));
-          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-          URL.revokeObjectURL(url);
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        } catch (e) {
-          URL.revokeObjectURL(url);
-          reject(new Error('图片处理失败'));
-        }
-      };
-      img.onerror = function () {
-        URL.revokeObjectURL(url);
-        reject(new Error('这个文件不是可识别的图片'));
-      };
-      img.src = url;
+      var fr = new FileReader();
+      fr.onload = function () { resolve(String(fr.result)); };
+      fr.onerror = function () { reject(new Error('图片读取失败')); };
+      fr.readAsDataURL(blob);
     });
   }
 
-  function imageFieldHTML(key, label, value) {
-    var has = !!value;
-    var isData = has && value.indexOf('data:') === 0;
-    return '<div class="field">' +
-      '<label>' + esc(label) + '</label>' +
-      '<div class="img-picker" data-key="' + key + '" data-value="' + esc(value || '') + '">' +
-        '<div class="img-preview' + (has ? '' : ' empty') + '">' +
-          (has ? '<img src="' + esc(value) + '" alt="">' : '<span>暂无图片</span>') +
-        '</div>' +
-        '<div class="img-side">' +
-          '<div class="btn-row">' +
-            '<button type="button" class="btn sm" data-img-pick>' + (has ? '更换图片' : '选择图片') + '</button>' +
-            '<button type="button" class="btn sm ghost' + (has ? '' : ' hidden') + '" data-img-clear>清除</button>' +
-          '</div>' +
-          '<input class="input img-path" data-img-path type="text" spellcheck="false" ' +
-            'placeholder="或粘贴图片网址 / 路径" value="' + esc(isData ? '' : (value || '')) + '">' +
-          '<div class="hint">' + (has ? '已有图片' : '拍照或选择文件，自动压缩') + '</div>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
+  // 已登录 → 传到 Supabase Storage 拿直链；没登录 → 退回 dataURL 内嵌
+  function storePhoto(blob) {
+    if (S.session() && C.isConfigured()) {
+      var dir = 'form/' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+      return uploadPhoto(blob, 'covers/' + dir + '/p.jpg');
+    }
+    return blobToDataURL(blob);
   }
 
-  function wireImagePickers() {
-    ['cover', 'back'].forEach(function (key) {
-      var box = el.modal.querySelector('.img-picker[data-key="' + key + '"]');
-      if (!box) { return; }
-      var preview = box.querySelector('.img-preview');
-      var hint = box.querySelector('.hint');
-      var clearBtn = box.querySelector('[data-img-clear]');
-      var pickBtn = box.querySelector('[data-img-pick]');
-      var pathInput = box.querySelector('[data-img-path]');
-      var file = document.createElement('input');
-      file.type = 'file';
-      file.accept = 'image/*';
-      file.style.display = 'none';
-      box.appendChild(file);
+  function renderPhotoThumbs() {
+    var box = $('photoThumbs');
+    if (!box) { return; }
+    if (!formPhotos.length) {
+      box.innerHTML = '<div class="pm-empty">还没有照片</div>';
+    } else {
+      box.innerHTML = formPhotos.map(function (src, i) {
+        return '<figure class="pm-thumb' + (i === 0 ? ' is-cover' : '') + '">' +
+          '<img src="' + esc(src) + '" alt="">' +
+          (i === 0
+            ? '<span class="pm-badge">封面</span>'
+            : '<button type="button" class="pm-set" data-setcover="' + i + '">设为封面</button>') +
+          '<button type="button" class="pm-del" data-delphoto="' + i + '" aria-label="删除">×</button>' +
+          '</figure>';
+      }).join('');
+    }
+    var hint = $('photoHint');
+    if (hint) {
+      hint.textContent = formPhotos.length
+        ? '共 ' + formPhotos.length + ' 张 · 第一张是封面'
+        : '可以选多张，也能直接拍照';
+    }
+  }
 
-      pickBtn.addEventListener('click', function () { file.click(); });
+  function initPhotoManager(book) {
+    formPhotos = [];
+    if (book) {
+      formPhotos = S.photoList(book);
+      if (!formPhotos.length) {
+        if (book.cover) { formPhotos.push(book.cover); }
+        if (book.back) { formPhotos.push(book.back); }
+      }
+    }
+    renderPhotoThumbs();
 
-      pathInput.addEventListener('input', function () {
-        var v = pathInput.value.trim();
-        box.setAttribute('data-value', v);
-        if (v) {
-          preview.classList.remove('empty');
-          preview.innerHTML = '<img src="' + esc(v) + '" alt="">';
-          clearBtn.classList.remove('hidden');
-          hint.textContent = '使用填写的图片地址';
-        } else {
-          preview.classList.add('empty');
-          preview.innerHTML = '<span>暂无图片</span>';
-          clearBtn.classList.add('hidden');
-          hint.textContent = '拍照或选择文件，自动压缩';
-        }
-      });
+    var file = document.createElement('input');
+    file.type = 'file';
+    file.accept = 'image/*';
+    file.multiple = true;
+    file.style.display = 'none';
+    el.modal.appendChild(file);
 
-      file.addEventListener('change', function () {
-        var f = file.files && file.files[0];
-        if (!f) { return; }
-        hint.textContent = '正在压缩…';
-        fileToDataURL(f, 1000, 0.72).then(function (dataUrl) {
-          box.setAttribute('data-value', dataUrl);
-          pathInput.value = '';
-          preview.classList.remove('empty');
-          preview.innerHTML = '<img src="' + dataUrl + '" alt="">';
-          clearBtn.classList.remove('hidden');
-          pickBtn.textContent = '更换图片';
-          var kb = Math.round(dataUrl.length * 0.75 / 1024);
-          hint.textContent = '已添加 · 约 ' + kb + ' KB（已压缩到长边 1000px）';
-        }).catch(function (e) {
-          hint.textContent = '拍照或选择文件，自动压缩';
-          toast(e.message, { type: 'err' });
+    $('btnAddPhoto').addEventListener('click', function () {
+      file.value = '';
+      file.click();
+    });
+
+    $('photoThumbs').addEventListener('click', function (e) {
+      var del = e.target.closest('[data-delphoto]');
+      if (del) {
+        formPhotos.splice(parseInt(del.getAttribute('data-delphoto'), 10), 1);
+        renderPhotoThumbs();
+        return;
+      }
+      var setCover = e.target.closest('[data-setcover]');
+      if (setCover) {
+        var i = parseInt(setCover.getAttribute('data-setcover'), 10);
+        var picked = formPhotos.splice(i, 1)[0];
+        formPhotos.unshift(picked);
+        renderPhotoThumbs();
+      }
+    });
+
+    file.addEventListener('change', function () {
+      var list = Array.prototype.slice.call(file.files || []).filter(function (f) { return /^image\//.test(f.type); });
+      if (!list.length) { return; }
+      var hint = $('photoHint');
+      var done = 0;
+      var failed = 0;
+      var chain = Promise.resolve();
+      list.forEach(function (f) {
+        chain = chain.then(function () {
+          if (hint) { hint.textContent = '正在处理 ' + (done + 1) + '/' + list.length + '…'; }
+          return fileToJpegBlob(f, 1000, 0.72).then(storePhoto).then(function (url) {
+            formPhotos.push(url);
+            done++;
+            renderPhotoThumbs();
+          }).catch(function (e) {
+            failed++;
+            console.warn('照片处理失败', f.name, e);
+          });
         });
       });
-
-      clearBtn.addEventListener('click', function () {
-        box.setAttribute('data-value', '');
-        pathInput.value = '';
-        preview.classList.add('empty');
-        preview.innerHTML = '<span>暂无图片</span>';
-        clearBtn.classList.add('hidden');
-        pickBtn.textContent = '选择图片';
-        hint.textContent = '拍照或选择文件，自动压缩';
+      chain.then(function () {
+        renderPhotoThumbs();
+        if (failed) { toast(failed + ' 张没处理成功', { type: 'err' }); }
+        else { toast('已添加 ' + done + ' 张'); }
       });
     });
   }
-
   function confirmModal(title, text, okLabel, onOk) {
     openModal(
       modalHead(title, '') +
