@@ -211,12 +211,14 @@
     var html = '<div class="kpis" style="margin-bottom:12px">' +
       smallKpi('今日访问', s.visits_today, '次') +
       smallKpi('今日访客', s.visitors_today, '人') +
-      smallKpi('有效访客', s.valid_visitors_total, '人') +
+      smallKpi('今日有效访客', s.valid_visitors_today, '人') +
+      smallKpi('累计访问', s.visits_total, '次') +
       smallKpi('累计访客', s.visitors_total, '人') +
+      smallKpi('累计有效访客', s.valid_visitors_total, '人') +
       '</div>' +
       '<div class="muted" style="font-size:11.5px;margin:-4px 0 12px">' +
-      '有效访问 ' + fmtInt(s.valid_visits_total) + ' 次 · 今日有效访客 ' + fmtInt(s.valid_visitors_today) +
-      ' 人 · 近 7 天访客 ' + fmtInt(s.visitors_7d) + ' 人（有效 ' + fmtInt(s.valid_visitors_7d) + ' 人）' +
+      '近 7 天访客 ' + fmtInt(s.visitors_7d) + ' 人（有效 ' + fmtInt(s.valid_visitors_7d) + ' 人）' +
+      ' · 有效访问共 ' + fmtInt(s.valid_visits_total) + ' 次' +
       '</div>';
 
     var days = (d.daily || []).slice(0, 7).slice().reverse();
@@ -243,7 +245,7 @@
             '<div class="vr-t">' + esc(r.device || '未知设备') +
               '<span class="muted" style="font-weight:400"> · ' + esc(r.ip || 'IP 未知') + '</span></div>' +
             '<div class="vr-s">' + (r.referrer ? '来自 ' + esc(r.referrer) + ' · ' : '') +
-              (dwell ? '停留 ' + dwell + ' 秒' : '停留 < 15 秒') + '</div>' +
+              '停留 ' + dwell + ' 秒</div>' +
           '</div>' +
           '<div class="vr-side">' +
             (r.engaged ? '<span class="vr-pill ok">有效</span>' : '<span class="vr-pill">跳出</span>') +
