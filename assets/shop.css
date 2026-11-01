@@ -76,6 +76,19 @@
   backdrop-filter: blur(4px);
   font-variant-numeric: tabular-nums;
 }
+.shop-cover .stock-tag.out { background: rgba(178, 58, 44, .88); }
+
+/* 已售完：置灰、不可选，排在列表最后 */
+.shop-card.sold-out { opacity: .78; }
+.shop-card.sold-out .shop-cover img { filter: grayscale(.6); }
+.shop-card.sold-out .shop-price { color: var(--muted); }
+.shop-card.sold-out .btn[disabled] {
+  opacity: 1;
+  background: var(--surface-3);
+  border-color: transparent;
+  color: var(--muted);
+  pointer-events: none;
+}
 
 .shop-info { padding: 10px 11px 11px; display: flex; flex-direction: column; gap: 5px; flex: 1; }
 .shop-title {
