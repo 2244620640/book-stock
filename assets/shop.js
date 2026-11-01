@@ -202,6 +202,51 @@
       (Number(d.visitors_today) ? '，今天 ' + Number(d.visitors_today) + ' 位' : '');
   }
 
+  var CONTACT_KEY = 'bookstock.contact.v1';
+
+  function fetchContact(cfg) {
+    return fetch(cfg.url + '/rest/v1/site_settings?select=value&key=eq.contact', {
+      headers: { apikey: cfg.key, Accept: 'application/json' }
+    }).then(function (r) {
+      if (!r.ok) { return null; }
+      return r.json();
+    }).then(function (rows) {
+      return (rows && rows[0]) ? String(rows[0].value || '') : null;
+    }).catch(function () { return null; });
+  }
+
+  function renderContact(text) {
+    var box = el.contactBox;
+    var tip = el.cartContact;
+    var t = String(text || '').trim();
+    if (!t) {
+      if (box) { box.hidden = true; }
+      if (tip) { tip.hidden = true; }
+      return;
+    }
+    if (box) {
+      box.hidden = false;
+      el.contactText.textContent = t;
+    }
+    if (tip) {
+      tip.hidden = false;
+      tip.innerHTML = '<span class="cc-label">发给店主：</span>' + esc(t).replace(/\n/g, '<br>');
+    }
+  }
+
+  function loadContact(cfg) {
+    try {
+      var cached = localStorage.getItem(CONTACT_KEY);
+      if (cached !== null) { renderContact(cached); }
+    } catch (e) { }
+    if (!cfg) { return; }
+    fetchContact(cfg).then(function (v) {
+      if (v === null) { return; }
+      try { localStorage.setItem(CONTACT_KEY, v); } catch (e) { }
+      renderContact(v);
+    });
+  }
+
   function readConfig() {
     return fetch('config.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : {}; })
@@ -767,6 +812,7 @@
 
       // 访客数独立拉取：即使数据库连不上，也先显示上次缓存的人数
       renderPublicVisits(cachedPublicVisits());
+      loadContact(state.cfg);
       if (state.cfg) {
         // 等本次访问记录写入后再统计，否则可能统计不到自己
         Promise.resolve(visitInsert).then(function () {
@@ -818,6 +864,9 @@
       shopEmpty: $('shopEmpty'),
       shopCount: $('shopCount'),
       shopVisitors: $('shopVisitors'),
+      contactBox: $('contactBox'),
+      contactText: $('contactText'),
+      cartContact: $('cartContact'),
       btnRefresh: $('btnRefresh'),
       btnCart: $('btnCart'),
       cartBadge: $('cartBadge'),
