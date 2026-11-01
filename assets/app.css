@@ -910,6 +910,7 @@ details.help code {
 }
 
 .tag.photo { background: var(--surface-3); color: var(--ink-2); }
+.tag.mark { background: var(--warn-soft); color: var(--warn); }
 
 .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
 @media (min-width: 720px) { .photo-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; } }
