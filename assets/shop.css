@@ -175,6 +175,38 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 20%, transparent);
 }
 
+/* 采购联系方式 */
+.contact-box {
+  max-width: 1180px;
+  margin: 0 auto 26px;
+  padding: 15px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.contact-box h3 { font-size: 14px; margin-bottom: 7px; }
+.contact-text {
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cart-contact {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  line-height: 1.65;
+  word-break: break-word;
+}
+.cart-contact .cc-label { color: var(--ink-2); font-weight: 550; }
+
 .shop-notice {
   max-width: 640px;
   margin: 30px auto;
