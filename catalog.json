@@ -11,6 +11,8 @@
         "unit":  "套",
         "cover":  "assets/covers/shaonian/002.jpg",
         "back":  "assets/covers/shaonian/001.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -25,6 +27,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/003.jpg",
         "back":  "assets/covers/shaonian/004.jpg",
+        "tags":  "",
+        "sold_out_at":  "2026-11-01 02:26:49.148+00",
         "updated_at":  "2026-11-01 02:26:49.148+00"
     },
     {
@@ -39,6 +43,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/005.jpg",
         "back":  "assets/covers/shaonian/006.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -53,6 +59,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/007.jpg",
         "back":  "assets/covers/shaonian/008.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -67,6 +75,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/009.jpg",
         "back":  "assets/covers/shaonian/010.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -81,6 +91,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/011.jpg",
         "back":  "assets/covers/shaonian/012.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -95,6 +107,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/013.jpg",
         "back":  "assets/covers/shaonian/014.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -109,6 +123,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/015.jpg",
         "back":  "assets/covers/shaonian/016.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -123,6 +139,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/017.jpg",
         "back":  "assets/covers/shaonian/018.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -137,6 +155,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/019.jpg",
         "back":  "assets/covers/shaonian/020.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -151,6 +171,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/021.jpg",
         "back":  "assets/covers/shaonian/022.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -165,6 +187,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/023.jpg",
         "back":  "assets/covers/shaonian/024.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -179,6 +203,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/025.jpg",
         "back":  "assets/covers/shaonian/026.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -193,6 +219,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/027.jpg",
         "back":  "assets/covers/shaonian/028.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -207,6 +235,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/029.jpg",
         "back":  "assets/covers/shaonian/030.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -221,6 +251,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/031.jpg",
         "back":  "assets/covers/shaonian/032.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -235,6 +267,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/033.jpg",
         "back":  "assets/covers/shaonian/034.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -249,6 +283,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/035.jpg",
         "back":  "assets/covers/shaonian/036.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -263,6 +299,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/037.jpg",
         "back":  "assets/covers/shaonian/038.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -277,6 +315,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/039.jpg",
         "back":  "assets/covers/shaonian/040.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -291,6 +331,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/041.jpg",
         "back":  "assets/covers/shaonian/042.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -305,6 +347,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/043.jpg",
         "back":  "assets/covers/shaonian/044.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -319,6 +363,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/045.jpg",
         "back":  "assets/covers/shaonian/046.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -333,6 +379,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/047.jpg",
         "back":  "assets/covers/shaonian/048.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -347,6 +395,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/049.jpg",
         "back":  "assets/covers/shaonian/050.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -361,6 +411,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/051.jpg",
         "back":  "assets/covers/shaonian/052.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -375,6 +427,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/053.jpg",
         "back":  "assets/covers/shaonian/054.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -389,6 +443,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/055.jpg",
         "back":  "assets/covers/shaonian/056.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -403,6 +459,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/057.jpg",
         "back":  "assets/covers/shaonian/058.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -417,6 +475,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/059.jpg",
         "back":  "assets/covers/shaonian/060.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -431,6 +491,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/061.jpg",
         "back":  "assets/covers/shaonian/062.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -445,6 +507,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/063.jpg",
         "back":  "assets/covers/shaonian/064.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -459,6 +523,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/065.jpg",
         "back":  "assets/covers/shaonian/066.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -473,6 +539,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/067.jpg",
         "back":  "assets/covers/shaonian/068.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -487,6 +555,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/069.jpg",
         "back":  "assets/covers/shaonian/070.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -501,6 +571,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/071.jpg",
         "back":  "assets/covers/shaonian/072.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -515,6 +587,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/073.jpg",
         "back":  "assets/covers/shaonian/074.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -529,6 +603,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/075.jpg",
         "back":  "assets/covers/shaonian/076.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -543,6 +619,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/077.jpg",
         "back":  "assets/covers/shaonian/078.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -557,6 +635,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/079.jpg",
         "back":  "assets/covers/shaonian/080.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -571,6 +651,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/081.jpg",
         "back":  "assets/covers/shaonian/082.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -585,6 +667,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/083.jpg",
         "back":  "assets/covers/shaonian/084.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -599,6 +683,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/085.jpg",
         "back":  "assets/covers/shaonian/086.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -613,6 +699,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/087.jpg",
         "back":  "assets/covers/shaonian/088.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -627,6 +715,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/089.jpg",
         "back":  "assets/covers/shaonian/090.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -641,6 +731,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/091.jpg",
         "back":  "assets/covers/shaonian/092.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -655,6 +747,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/093.jpg",
         "back":  "assets/covers/shaonian/094.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -669,6 +763,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/095.jpg",
         "back":  "assets/covers/shaonian/096.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -683,6 +779,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/097.jpg",
         "back":  "assets/covers/shaonian/098.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -697,6 +795,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/099.jpg",
         "back":  "assets/covers/shaonian/100.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -711,6 +811,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/101.jpg",
         "back":  "assets/covers/shaonian/102.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -725,6 +827,8 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/103.jpg",
         "back":  "assets/covers/shaonian/104.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
     },
     {
@@ -739,6 +843,24 @@
         "unit":  "册",
         "cover":  "assets/covers/shaonian/105.jpg",
         "back":  "assets/covers/shaonian/106.jpg",
+        "tags":  "",
+        "sold_out_at":  null,
         "updated_at":  "2026-10-31 18:13:40+00"
+    },
+    {
+        "id":  "cb6b7bcd-f9b2-4530-9ecb-404629d2bcae",
+        "title":  "老家出物",
+        "author":  "",
+        "isbn":  "",
+        "category":  "同人志",
+        "publisher":  "",
+        "price":  "0.00",
+        "qty":  0,
+        "unit":  "套",
+        "cover":  "https://llzbyzuoklyoxaaxxbmq.supabase.co/storage/v1/object/public/covers/20261101/20261101-djq3/p001-1.jpg",
+        "back":  "https://llzbyzuoklyoxaaxxbmq.supabase.co/storage/v1/object/public/covers/20261101/20261101-djq3/p001-2.jpg",
+        "tags":  "",
+        "sold_out_at":  "2026-11-01 03:19:18.406+00",
+        "updated_at":  "2026-11-01 03:21:20.587+00"
     }
 ]
