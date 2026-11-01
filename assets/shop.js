@@ -174,6 +174,7 @@
       minQty: Number(r.min_qty || r.minQty) || 0,
       unit: String(r.unit || '册'),
       cover: String(r.cover || ''),
+      back: String(r.back || ''),
       location: String(r.location || ''),
       tags: String(r.tags || '')
     };
@@ -198,6 +199,24 @@
   /* ---------------- 渲染 ---------------- */
 
   function inStock(b) { return b.qty > 0; }
+
+  // 卡片上展示的图片：最多 3 张（cover → back → 其余），至少尽量给 2 张
+  function photosOf(b) {
+    var list = [];
+    if (b.photos) {
+      list = String(b.photos).split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+    }
+    if (!list.length) {
+      if (b.cover) { list.push(b.cover); }
+      if (b.back) { list.push(b.back); }
+    }
+    var seen = {};
+    var out = [];
+    list.forEach(function (s) {
+      if (s && !seen[s] && out.length < 3) { seen[s] = 1; out.push(s); }
+    });
+    return out;
+  }
 
   // 有货的排前面（按书名），已售完的统一排到最后
   function sortedRows() {
@@ -261,17 +280,35 @@
   }
 
   function cardHTML(b) {
-    var cover = b.cover
-      ? '<img src="' + esc(b.cover) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
-      : '';
+    var imgs = photosOf(b);
     var soldOut = !inStock(b);
     var noteTags = String(b.tags || '').split(/[,，\s]+/).filter(Boolean).slice(0, 3);
+
+    var coverHTML;
+    if (!imgs.length) {
+      coverHTML = '<div class="ph">暂无图片</div>';
+    } else if (imgs.length === 1) {
+      coverHTML = '<div class="cv-one"><img src="' + esc(imgs[0]) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'"></div>';
+    } else {
+      // 2~3 张：左边主图 + 右边一到两张小图
+      coverHTML = '<div class="cv-multi">' +
+        '<div class="cv-main"><img src="' + esc(imgs[0]) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'"></div>' +
+        '<div class="cv-side">' +
+          imgs.slice(1, 3).map(function (src) {
+            return '<div class="cv-sub"><img src="' + esc(src) + '" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'"></div>';
+          }).join('') +
+        '</div>' +
+      '</div>';
+    }
+
     return '<article class="shop-card' + (soldOut ? ' sold-out' : '') + '" data-id="' + esc(b.id) + '">' +
-      '<div class="shop-cover">' + cover +
-        (cover ? '' : '<div class="ph">暂无图片</div>') +
+      '<div class="shop-cover' + (imgs.length > 1 ? ' multi' : '') + '">' + coverHTML +
         '<span class="stock-tag' + (soldOut ? ' out' : '') + '">' +
           (soldOut ? '已售完' : '库存 ' + b.qty + ' ' + esc(b.unit)) +
         '</span>' +
+        (imgs.length > 1
+          ? '<span class="photo-count">' + imgs.length + ' 张</span>'
+          : '') +
       '</div>' +
       '<div class="shop-info">' +
         '<div class="shop-title">' + esc(b.title) + '</div>' +
