@@ -73,6 +73,7 @@
       minQty: nonNegInt(raw.minQty != null ? raw.minQty : raw.min_qty, 0),
       unit: str(raw.unit) || '册',
       note: str(raw.note),
+      tags: str(raw.tags),
       cover: str(raw.cover || raw.cover_url),
       back: str(raw.back || raw.back_url),
       photos: str(raw.photos || raw.gallery),
@@ -229,7 +230,7 @@
    */
   function groupPhotos(list, mode, gapSec) {
     if (!list || !list.length) { return []; }
-    if (mode === 'all') { return [list]; }
+    if (mode === 'all' || mode === 'allset') { return [list]; }
     if (mode === 'each') { return list.map(function (f) { return [f]; }); }
     if (mode === 'pair') {
       var pairs = [];
@@ -293,7 +294,7 @@
 
   function matchText(b, q) {
     if (!q) { return true; }
-    var hay = [b.title, b.author, b.isbn, b.location, b.category, b.publisher, b.note].join(' ').toLowerCase();
+    var hay = [b.title, b.author, b.isbn, b.location, b.category, b.publisher, b.note, b.tags].join(' ').toLowerCase();
     var parts = q.toLowerCase().split(/\s+/).filter(Boolean);
     for (var i = 0; i < parts.length; i++) {
       if (hay.indexOf(parts[i]) < 0) { return false; }
@@ -362,6 +363,7 @@
       author: input.author, isbn: input.isbn, category: input.category,
       publisher: input.publisher, price: input.price, location: input.location,
       qty: input.qty, minQty: input.minQty, unit: input.unit, note: input.note,
+      tags: input.tags,
       cover: input.cover, back: input.back, photos: input.photos,
       updatedBy: opt.operator || state.settings.operator,
       createdAt: t, updatedAt: t, dirty: true
@@ -375,7 +377,7 @@
     return b;
   }
 
-  var EDITABLE = ['title', 'author', 'isbn', 'category', 'publisher', 'price', 'location', 'qty', 'minQty', 'unit', 'note', 'cover', 'back', 'photos'];
+  var EDITABLE = ['title', 'author', 'isbn', 'category', 'publisher', 'price', 'location', 'qty', 'minQty', 'unit', 'note', 'tags', 'cover', 'back', 'photos'];
 
   function updateBook(id, patch, opt) {
     opt = opt || {};
@@ -646,7 +648,7 @@
   var CSV_COLUMNS = [
     ['title', '书名'], ['author', '作者'], ['isbn', 'ISBN'], ['category', '分类'],
     ['publisher', '出版社'], ['price', '单价'], ['location', '货位'],
-    ['qty', '库存'], ['minQty', '安全库存'], ['unit', '单位'], ['note', '备注'], ['cover', '封面']
+    ['qty', '库存'], ['minQty', '安全库存'], ['unit', '单位'], ['note', '备注'], ['tags', '标签'], ['cover', '封面']
   ];
 
   function csvValue(col, value) {
@@ -698,7 +700,8 @@
     '安全库存': 'minQty', '最低库存': 'minQty', '预警值': 'minQty', 'minqty': 'minQty', 'min_qty': 'minQty',
     '单位': 'unit', 'unit': 'unit',
     '封面': 'cover', '封面图': 'cover', '封面图片': 'cover', 'cover': 'cover',
-    '备注': 'note', '说明': 'note', 'note': 'note'
+    '备注': 'note', '说明': 'note', 'note': 'note',
+    '标签': 'tags', '标签栏': 'tags', 'tags': 'tags'
   };
 
   function normHeader(h) {
