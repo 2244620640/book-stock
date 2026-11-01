@@ -90,6 +90,46 @@
     return String(m).replace(/\s+/g, ' ').trim().slice(0, 40);
   }
 
+  var visit = { id: '', start: 0, engaged: false, cfg: null };
+
+  function finishVisit() {
+    var cfg = visit.cfg;
+    if (!cfg || !visit.id) { return; }
+    var dwell = Math.round((Date.now() - visit.start) / 1000);
+    try {
+      fetch(cfg.url + '/rest/v1/rpc/visit_finish', {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          apikey: cfg.key,
+          Authorization: 'Bearer ' + cfg.key,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_vid: visit.id, p_dwell: dwell, p_engaged: visit.engaged })
+      }).catch(function () { });
+    } catch (e) { /* 忽略 */ }
+  }
+
+  function bindEngagement() {
+    var mark = function () {
+      visit.engaged = true;
+      document.removeEventListener('pointerdown', mark, true);
+      document.removeEventListener('keydown', mark, true);
+      document.removeEventListener('scroll', mark, true);
+    };
+    document.addEventListener('pointerdown', mark, true);
+    document.addEventListener('keydown', mark, true);
+    document.addEventListener('scroll', mark, { capture: true, passive: true });
+    window.addEventListener('pagehide', finishVisit);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') { finishVisit(); }
+    });
+    // 一直不走的访客，每 20 秒补一次时长
+    setInterval(function () {
+      if (visit.id && document.visibilityState === 'visible') { finishVisit(); }
+    }, 20000);
+  }
+
   function trackVisit(cfg) {
     try {
       var LAST = 'bookstock.visit.at';
@@ -104,18 +144,24 @@
       try {
         ref = String(document.referrer || '').replace(/^https?:\/\//i, '').split('/')[0].slice(0, 80);
       } catch (e) { }
-      var dev = deviceModel();
+      visit.cfg = cfg;
+      visit.start = Date.now();
+      visit.engaged = false;
       fetch(cfg.url + '/rest/v1/visits', {
         method: 'POST',
         headers: {
           apikey: cfg.key,
           Authorization: 'Bearer ' + cfg.key,
           'Content-Type': 'application/json',
-          Prefer: 'return=minimal'
+          Prefer: 'return=representation'
         },
-        body: JSON.stringify([{ visitor_id: vid, path: 'shop', referrer: ref, device: dev }])
+        body: JSON.stringify([{ visitor_id: vid, path: 'shop', referrer: ref, device: deviceModel() }])
       }).then(function (r) {
-        if (r.ok) { localStorage.setItem(LAST, String(Date.now())); }
+        if (!r.ok) { return null; }
+        localStorage.setItem(LAST, String(Date.now()));
+        return r.json();
+      }).then(function (rows) {
+        if (rows && rows[0] && rows[0].id) { visit.id = rows[0].id; }
       }).catch(function () { /* 统计失败不影响浏览 */ });
     } catch (e) { /* 忽略 */ }
   }
@@ -736,6 +782,7 @@
 
     loadCart();
     bind();
+    bindEngagement();
     render();
     load(false);
   }
